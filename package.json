@@ -1,0 +1,26 @@
+{
+  "name": "esignpro-qa-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright + TypeScript (POM) automation suite for https://esignpro.net",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:regression": "playwright test --grep @regression",
+    "report": "playwright show-report",
+    "codegen": "playwright codegen https://esignpro.net",
+    "auth:save": "tsx scripts/save-auth.ts",
+    "signup": "tsx scripts/signup.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.0",
+    "@types/node": "^24.0.0",
+    "dotenv": "^17.2.3",
+    "imapflow": "^1.0.164",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,163 @@
+name: Playwright tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: playwright-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: 'true'
+  BASE_URL: ${{ vars.BASE_URL || 'https://esignpro.net' }}
+  ESIGN_NAME: ${{ secrets.ESIGN_NAME }}
+  ESIGN_COMPANY: ${{ secrets.ESIGN_COMPANY }}
+  ESIGN_EMAIL: ${{ secrets.ESIGN_EMAIL }}
+  ESIGN_PASSWORD: ${{ secrets.ESIGN_PASSWORD }}
+  ESIGN_COMPANY_TYPE: ${{ vars.ESIGN_COMPANY_TYPE || 'Other' }}
+  ESIGN_COMPANY_SIZE: ${{ vars.ESIGN_COMPANY_SIZE || '1–50' }}
+  AUTH_STATE_PATH: auth/storageState.json
+  # Quota-consuming / real-signup cases stay opt-in on CI.
+  RUN_UPLOAD: 'false'
+  RUN_SIGNUP: 'false'
+
+jobs:
+  chromium:
+    name: Chromium — smoke on PR, full otherwise
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Restore authenticated session
+        env:
+          AUTH_STORAGE_STATE_B64: ${{ secrets.AUTH_STORAGE_STATE_B64 }}
+        run: |
+          mkdir -p auth
+          if [ -n "$AUTH_STORAGE_STATE_B64" ]; then
+            printf '%s' "$AUTH_STORAGE_STATE_B64" | base64 -d > auth/storageState.json
+            echo "Session restored ($(wc -c < auth/storageState.json) bytes)."
+          else
+            echo "::warning title=Missing session::AUTH_STORAGE_STATE_B64 is not set; authenticated specs will fail."
+          fi
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Smoke suite (pull requests)
+        if: github.event_name == 'pull_request'
+        run: npx playwright test --project=chromium --grep @smoke
+
+      - name: Full suite (main, nightly, manual)
+        if: github.event_name != 'pull_request'
+        run: npx playwright test --project=chromium
+
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-chromium
+          path: playwright-report/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Upload test results (JUnit, traces, video, screenshots)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-chromium
+          path: test-results/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Job summary
+        if: always()
+        run: |
+          {
+            echo "## Playwright — Chromium"
+            echo ""
+            echo "- Trigger: \`${{ github.event_name }}\` on \`${{ github.ref_name }}\`"
+            echo "- Report: \`playwright-report-chromium\` artifact"
+            echo "- Results: \`test-results-chromium\` artifact (JUnit + traces)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  cross-browser:
+    name: ${{ matrix.browser }} — smoke (schedule / manual)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [firefox, webkit]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+
+      - name: Restore authenticated session
+        env:
+          AUTH_STORAGE_STATE_B64: ${{ secrets.AUTH_STORAGE_STATE_B64 }}
+        run: |
+          mkdir -p auth
+          if [ -n "$AUTH_STORAGE_STATE_B64" ]; then
+            printf '%s' "$AUTH_STORAGE_STATE_B64" | base64 -d > auth/storageState.json
+          else
+            echo "::warning title=Missing session::AUTH_STORAGE_STATE_B64 is not set."
+          fi
+
+      - name: Smoke suite
+        run: npx playwright test --project=${{ matrix.browser }} --grep @smoke
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.browser }}
+          path: playwright-report/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.browser }}
+          path: test-results/
+          retention-days: 14
+          if-no-files-found: ignore
