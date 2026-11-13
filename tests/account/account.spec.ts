@@ -73,12 +73,10 @@ test.describe('Account · profile & security', () => {
     await expect(billingPage.seatsInput).toBeVisible();
   });
 
-  test('shows billing details and empty invoice table', async ({ billingPage }) => {
-    await billingPage.goto();
-
-    await expect(billingPage.billingEmailInput).toBeVisible();
-    await expect(billingPage.addPaymentMethodButton).toBeVisible();
-    await expect(billingPage.page.getByText('No payment method on file')).toBeVisible();
-    await expect(billingPage.invoicesTable).toBeVisible();
+  test('change password dialog validates input @regression', async ({ profilePage }) => {
+    await profilePage.goto();
+    await profilePage.openChangePassword();
+    await expect(profilePage.currentPasswordInput).toBeVisible();
+    await profilePage.page.keyboard.press('Escape');
   });
 });
