@@ -40,9 +40,21 @@ test.describe('Support tickets', () => {
 
   test('validates that a ticket cannot be submitted empty', async ({ supportPage }) => {
     await supportPage.openNewTicket();
-    await supportPage.submitButton.click();
 
+    /* The app blocks an empty ticket client-side without any message (see
+       FEATURES O9), so assert the outcome: no write request, dialog stays. */
+    const writes: string[] = [];
+    supportPage.page.on('request', (request) => {
+      if (request.method() !== 'GET' && request.url().startsWith(new URL(supportPage.page.url()).origin)) {
+        writes.push(`${request.method()} ${request.url()}`);
+      }
+    });
+    await supportPage.submitButton.click();
+    await supportPage.page.waitForTimeout(1_000);
+
+    expect(writes).toEqual([]);
     await expect(supportPage.dialog).toBeVisible();
-    await expect(supportPage.page).toHaveURL(/\/support/);
+    await supportPage.dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(supportPage.emptyState).toBeVisible();
   });
 });

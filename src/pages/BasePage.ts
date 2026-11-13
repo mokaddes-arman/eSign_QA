@@ -13,7 +13,26 @@ export abstract class BasePage {
   async goto(): Promise<void> {
     await this.page.goto(this.path, { waitUntil: 'domcontentloaded' });
     await this.settle();
+    await this.recoverFromApiOutage();
     await this.waitForReady();
+  }
+
+  /** Banner the app renders when a backend call times out ("Can't reach the eSignPro API"). */
+  get apiOutageAlert(): Locator {
+    return this.page.getByRole('alert').filter({ hasText: /reach the eSignPro API/ });
+  }
+
+  /**
+   * The backend occasionally times out under parallel load and the page then
+   * renders stale/blank data behind an alert. Reload once so a transient
+   * backend hiccup does not masquerade as a UI regression; a persistent
+   * outage still fails the test on its own assertions.
+   */
+  async recoverFromApiOutage(): Promise<void> {
+    if ((await this.apiOutageAlert.count()) === 0) return;
+    console.warn(`[api-outage] ${this.page.url()} — reloading once`);
+    await this.page.reload({ waitUntil: 'domcontentloaded' });
+    await this.settle();
   }
 
   /**

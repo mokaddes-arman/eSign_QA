@@ -44,4 +44,13 @@ export class DeveloperPage extends BasePage {
   async expectKeyEmptyState(): Promise<void> {
     await expect(this.page.getByText('No API keys yet')).toBeVisible();
   }
+
+  /**
+   * Keys panel is ready whether or not keys exist. Note: "Create key"
+   * creates a key immediately (no confirm step), so specs must never click it.
+   */
+  async expectKeysPanel(): Promise<void> {
+    await expect(this.createKeyButton).toBeVisible();
+    await expect(this.page.getByText(/secret is shown once/)).toBeVisible();
+  }
 }

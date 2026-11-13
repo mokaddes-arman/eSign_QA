@@ -40,6 +40,44 @@ test.describe('Authenticated navigation', () => {
     await expect(menu.getByRole('menuitem', { name: 'Sign out' })).toBeVisible();
   });
 
+  test('unknown routes return the 404 page', async ({ page }) => {
+    const response = await page.goto('/this-route-does-not-exist');
+    expect(response?.status()).toBe(404);
+    await expect(page.getByRole('heading', { name: "That page isn't here" })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Back to overview' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Open documents' })).toBeVisible();
+  });
+
+  test('global search returns grouped results', async ({ page, overviewPage }) => {
+    await overviewPage.goto();
+    await page.keyboard.press('Control+k');
+    const dialog = page.getByRole('dialog', { name: 'Search your workspace' });
+    await dialog.getByRole('combobox', { name: 'Search' }).fill('sample');
+
+    const results = dialog.getByRole('listbox', { name: 'Search results' });
+    await expect(results.getByRole('group', { name: 'Documents' })).toBeVisible();
+    await expect(results.getByRole('option', { name: /See all documents matching/ })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+  });
+
+  test('notifications bell opens a popover linking to the centre', async ({ page, overviewPage }) => {
+    await overviewPage.goto();
+    await page.getByRole('button', { name: 'Notifications' }).first().click();
+    const popover = page.getByRole('dialog', { name: 'Notifications' });
+    await popover.getByRole('link', { name: 'See all notifications' }).click();
+    await expect(page).toHaveURL(/\/notifications/);
+  });
+
+  test('product tour starts and can be skipped', async ({ page, overviewPage }) => {
+    await overviewPage.goto();
+    await page.getByRole('button', { name: 'Take the tour' }).click();
+    const tour = page.getByRole('dialog', { name: 'Product tour' });
+    await expect(tour.getByText(/Step 1 of \d+/)).toBeVisible();
+    await tour.getByRole('button', { name: 'Skip tour' }).click();
+    await expect(tour).toBeHidden();
+  });
+
   test('global search opens with keyboard shortcut', async ({ page, overviewPage }) => {
     await overviewPage.goto();
     await page.keyboard.press('Control+k');

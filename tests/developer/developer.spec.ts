@@ -15,7 +15,8 @@ test.describe('Developer platform', () => {
   test('navigates between developer sections', async ({ developerPage }) => {
     await developerPage.openSection('API keys');
     await expect(developerPage.page).toHaveURL(/section=keys/);
-    await developerPage.expectKeyEmptyState();
+    /* Data-independent: the workspace may or may not already hold keys. */
+    await developerPage.expectKeysPanel();
 
     await developerPage.openSection('Webhooks');
     await expect(developerPage.page).toHaveURL(/section=webhooks/);

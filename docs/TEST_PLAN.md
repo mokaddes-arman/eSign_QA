@@ -4,11 +4,11 @@
 |-------|-------|
 | Product | eSignPro (`https://esignpro.net`) |
 | Workspace under test | Global Softel — Free plan (`mokaddes.arman.2111+esignTest@gmail.com`) |
-| Document version | 1.0 |
+| Document version | 1.1 |
 | Author | QA — Mokaddes SQA |
-| Date | 13 Nov 2026 |
+| Date | 13 Nov 2026 (readiness review same day) |
 | Suite | Playwright + TypeScript, POM, GitHub Actions |
-| Status | Approved for execution |
+| Status | Ready for execution with open items — see §16 |
 
 ---
 
@@ -44,7 +44,7 @@ e-mail OTP.
 
 | # | Module | Routes |
 |---|--------|--------|
-| 1 | Public site & authentication | `/`, `/login`, `/login/forgot`, `/register`, `/login/verify`, `/trust` |
+| 1 | Public site & authentication | `/`, `/pricing`, `/trust`, `/verify`, `/security`, `/legal`, `/changelog`, `/login`, `/login/forgot`, `/register`, `/login/verify` |
 | 2 | Application shell, navigation, global search, theming | global |
 | 3 | Overview dashboard | `/overview` |
 | 4 | Documents library (folders, views, filters, sorting, upload, folders) | `/documents`, `/documents?folder=*` |
@@ -70,7 +70,9 @@ e-mail OTP.
 
 ### 3.3 Assumptions
 
-- The staging/live `esignpro.net` deployment is stable during execution.
+- The `esignpro.net` deployment is stable during execution. **It is the live
+  deployment, not a staging copy**: every write the suite performs (folders, contacts,
+  drafts, fields) lands in the real test workspace.
 - The test account remains on the Free plan (6 signature requests/month) unless a trial
   is explicitly activated.
 - Mailbox access for OTP is available manually, or `GMAIL_USER` + `GMAIL_APP_PASSWORD`
@@ -154,7 +156,7 @@ npm test               # headless runs reuse auth/storageState.json
 | Contacts | Generated per run (`QA Contact <timestamp>`) | Opens the new contact's detail page after save. |
 | Folders | Generated per run (`QA Folder <timestamp>`) | Cleanup is manual (Trash/Archive). |
 | Support tickets | Created only in manual negative runs | Empty-submit validation is automated. |
-| API keys | Not created automatically | Secret is shown once; avoid leaking into logs. |
+| API keys | Not created automatically | **Create key creates a key instantly (no confirm)** — specs must never click it. Secret is shown once; avoid leaking into logs. Two TEST keys created during the 13 Nov exploration were revoked the same day (they still list as "revoked" with a Restore option). |
 
 **Quota caution.** The Free plan allows 6 signature requests per month and drafts consume
 it. Upload tests are therefore gated:
@@ -189,9 +191,9 @@ mid-run. Resume after a fresh session is saved and data is cleaned; re-run `@smo
 
 | Phase | Modules | Cases | Automation spec | Entry → Exit |
 |-------|---------|-------|-----------------|--------------|
-| P1 — Smoke | Auth, Navigation, Overview, Documents list, Prepare landing, Reports, Support, Account, Billing | ~24 | `tests/auth`, `tests/navigation`, `tests/overview`, `tests/documents`, `tests/reports`, `tests/support`, `tests/account` | Every push / PR |
-| P2 — Core | Documents filters/folders, Prepare builder, Workflow, Contacts, Reports tables, Developer, Billing dialogs | ~20 | `tests/documents/prepare.spec.ts`, `tests/contacts`, `tests/developer`, `tests/account` | Nightly / pre-release |
-| P3 — Extended | Signer preview, live signup, upload/golden path, notifications, audit, integrations, organisation, branding, payments | ~20 | Gated specs + manual charters | Weekly / release candidate |
+| P1 — Smoke | Public pages & access control, Auth, Navigation, Overview, Documents list, Prepare landing, Signer preview, Reports, Support, Account, Billing | ~30 (`@smoke`) | `tests/public`, `tests/auth`, `tests/navigation`, `tests/overview`, `tests/documents`, `tests/signer`, `tests/reports`, `tests/support`, `tests/account`, `tests/billing` | Every push / PR |
+| P2 — Core | Library actions, filters/folders, Prepare builder + inspector, Workflow options, Contacts, Report sections, Developer tools, Account settings pages, Billing dialogs | ~70 | `tests/documents/*.spec.ts`, `tests/contacts`, `tests/developer`, `tests/reports`, `tests/account/settings.spec.ts` | Nightly / pre-release |
+| P3 — Extended | Live signup, upload/golden path, sending & signing, row-action behaviour, persistence of settings, payments | ~70 manual + gated | Gated specs (`RUN_SIGNUP`, `RUN_UPLOAD`, `RUN_PAYMENT`) + manual charters | Weekly / release candidate |
 | P4 — Non-functional | Accessibility, responsive, cross-browser, session/deep links, 404 | ~10 | All projects + manual audit | Release candidate |
 
 ## 9. Schedule (indicative)
@@ -199,7 +201,7 @@ mid-run. Resume after a fresh session is saved and data is cleaned; re-run `@smo
 | Day | Activity | Output |
 |-----|----------|--------|
 | D1 | Environment setup, MCP wiring, signup, session capture, feature inventory | `FEATURES.md`, `storageState.json` |
-| D2 | POM scaffold, helpers, module specs, first green run | Test suite, 46 automated cases |
+| D2 | POM scaffold, helpers, module specs, first green run | Test suite (now 85 automated + 33 partly automated cases) |
 | D3 | Test design, negative cases, hardening, CI pipeline | `TEST_CASES.md`, workflow YAML |
 | D4 | P3 manual charters (signer, API console, settings), defect triage | Defect log, evidence |
 | D5 | Regression, report, sign-off | HTML/JUnit report, summary |
@@ -226,7 +228,10 @@ mid-run. Resume after a fresh session is saved and data is cleaned; re-run `@smo
 | R7 | API keys/secret leakage in logs or reports | Low | High | No automated key creation; redact secrets; artifacts private |
 | R8 | Parallel workers sharing one account state | Medium | Low | Workers ≤ 2 on CI; avoid mutating shared settings |
 | R9 | Cross-browser timing differences | Medium | Low | Dedicated projects; Chromium gates smoke, others nightly |
-| R10 | Session expiry mid-run | Medium | Medium | `npm run auth:save` in runbook; CI refreshes secret |
+| R10 | Session expiry mid-run | **High** | **High** | `sf_session` lives ~12 h, so the `AUTH_STORAGE_STATE_B64` secret is stale before the next nightly run. Configure `GMAIL_USER` + `GMAIL_APP_PASSWORD` so CI can log in with OTP, or refresh the secret before each run |
+| R11 | Backend timeouts under parallel load | Medium | Medium | Pages show "Can't reach the eSignPro API"; `BasePage.goto()` reloads once, failures beyond that are logged as defects (FEATURES O1) |
+| R12 | Monthly quota already exhausted (6/6 until 13 Dec 2026) | High | High | Upload, send and golden-path cases are blocked; reset quota, start an Enterprise trial, or use a fresh workspace |
+| R13 | Live-site writes from automation | High | Low | 21 folders and 8 contacts already accumulated; tag every write test `@data`, exclude it from nightly or add cleanup |
 
 ## 12. Defect management
 
@@ -273,3 +278,20 @@ switching to a paid plan or sending real envelopes to third parties.
 - `auth/storageState.json` — reusable signed-in session (git-ignored).
 - `.github/workflows/playwright.yml` — CI pipeline.
 - Playwright HTML/JUnit reports per run.
+
+## 16. Readiness review — 13 Nov 2026
+
+| Area | Status | Notes |
+|------|:------:|-------|
+| Feature inventory | ✅ | `FEATURES.md` re-verified against 49 authenticated routes + guest pages; 11 observations logged (§14 there). |
+| Test design | ✅ | 190 cases; every feature ID traced to a case (`TEST_CASES.md` traceability table). |
+| Automation | ✅ | 85 fully + 33 partly automated cases; `tsc` clean. Full Chromium suite ×3 after fixes: 284 passed, 1 failed (form-catalog timing, since fixed), 18 skipped (gated `@quota`/`@payment`/`RUN_SIGNUP`). |
+| Flakiness | ✅ fixed / ⚠️ re-verify | Root causes removed: data-dependent API-key empty-state assertion, brittle `getByText('Free')` plan locator + backend timeout, duplicate billing test, builder tests racing on one draft (now serial), form catalog clicked before the client-routed view rendered, and the field-placement test leaving a new Signature field on the shared draft every run (now undone; 5 leftover fields remain on the draft). The last two builder fixes could not be re-run: the backend was returning "Can't reach the eSignPro API" at the end of the session. |
+| Repository hygiene | ✅ fixed | `.gitignore` rule `auth/` also ignored `tests/auth/`, so login/signup specs were never committed; now `/auth/`. |
+| Auth for CI | ⚠️ open | Session lasts ~12 h; nightly CI needs IMAP OTP or a fresh `AUTH_STORAGE_STATE_B64` (R10). |
+| Test data / quota | ⚠️ open | Quota 6/6 used; upload, send and signing cases blocked until 13 Dec (R12). Clean up `QA Folder …` / `QA Contact …` items. (The two TEST API keys created during exploration are revoked.) |
+| Payment config | ⚠️ open | `.env` `CARD_NUMBER` has 18 digits; the Stripe test card is `4242 4242 4242 4242` (16). The `@payment` plan-switch test swallows errors with `.catch()` and asserts only that "Team" text exists — rewrite before relying on it. |
+| Cross-browser | ⚠️ partial | Firefox skips two `/documents` select tests (renderer crash); WebKit/mobile run smoke only. |
+
+**Verdict:** the plan is ready for P1/P2 execution (smoke + core). P3 (golden path, sending,
+signing, payments) is blocked until the quota is reset and CI authentication is solved.

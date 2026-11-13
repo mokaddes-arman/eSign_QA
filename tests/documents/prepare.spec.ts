@@ -36,6 +36,10 @@ test.describe('New envelope landing', () => {
 });
 
 test.describe('Envelope preparation builder', () => {
+  /* All builder tests reuse the same latest draft; run them one at a time so
+     field placement never races the read-only assertions. */
+  test.describe.configure({ mode: 'serial' });
+
   test.beforeEach(async ({ preparePage }) => {
     await preparePage.goto();
     await preparePage.continueLatestDraft();
@@ -54,12 +58,20 @@ test.describe('Envelope preparation builder', () => {
   });
 
   test('places a signature field on the page', async ({ preparePage }) => {
-    await preparePage.placeFieldInMiddle('Signature');
+    const page = preparePage.page;
+    /* The builder header ("N fields · autosaved") is the source of truth for the field count. */
+    const counter = page.getByText(/^\d+ fields? · autosaved$/);
+    const fieldCount = async () => Number((await counter.innerText()).match(/^\d+/)![0]);
+    await expect(counter).toBeVisible({ timeout: 10_000 });
+    const before = await fieldCount();
 
-    await expect(preparePage.page.getByText(/\d+ fields? · autosaved/)).toBeVisible({
-      timeout: 10_000,
-    });
+    await preparePage.placeFieldInMiddle('Signature');
+    await expect.poll(fieldCount, { timeout: 10_000 }).toBe(before + 1);
     await expect(preparePage.inspector).toBeVisible();
+
+    /* Leave the shared draft as we found it so fields do not pile up across runs. */
+    await page.getByRole('button', { name: 'Undo', exact: true }).click();
+    await expect.poll(fieldCount, { timeout: 10_000 }).toBe(before);
   });
 
   test('moves to the workflow step with routing and delivery options @smoke', async ({

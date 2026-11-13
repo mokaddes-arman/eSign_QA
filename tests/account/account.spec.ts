@@ -58,25 +58,24 @@ test.describe('Account · profile & security', () => {
     }
   });
 
-  test('opens the change-plan and add-seat dialogs', async ({ billingPage }) => {
-    await billingPage.goto();
-    await expect(billingPage.heading).toBeVisible();
-    await expect(billingPage.planCard).toBeVisible();
+  /* Change-plan / add-seat dialogs are covered once, in tests/billing/billing.spec.ts. */
 
-    await billingPage.openChangePlan();
-    for (const plan of ['Free', 'Team', 'Business', 'Enterprise'] as const) {
-      await expect(billingPage.planOption(plan)).toBeVisible();
-    }
-    await billingPage.page.keyboard.press('Escape');
-
-    await billingPage.openAddSeats();
-    await expect(billingPage.seatsInput).toBeVisible();
-  });
-
-  test('change password dialog validates input @regression', async ({ profilePage }) => {
+  test('change password cannot continue without the current password @regression', async ({
+    profilePage,
+  }) => {
     await profilePage.goto();
     await profilePage.openChangePassword();
-    await expect(profilePage.currentPasswordInput).toBeVisible();
-    await profilePage.page.keyboard.press('Escape');
+    const continueButton = profilePage.changePasswordDialog.getByRole('button', { name: 'Continue' });
+
+    await expect(profilePage.currentPasswordInput).toHaveValue('');
+    await expect(continueButton).toBeDisabled();
+
+    await profilePage.currentPasswordInput.fill('x');
+    await expect(continueButton).toBeEnabled();
+    await profilePage.currentPasswordInput.fill('');
+    await expect(continueButton).toBeDisabled();
+
+    await profilePage.changePasswordDialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(profilePage.changePasswordDialog).toBeHidden();
   });
 });

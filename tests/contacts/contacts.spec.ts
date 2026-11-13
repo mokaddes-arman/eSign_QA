@@ -60,7 +60,11 @@ test.describe('Contacts address book', () => {
     await contactsPage.fullNameInput.fill('QA Invalid');
     await contactsPage.emailInput.fill('not-an-email');
     await contactsPage.saveButton.click();
+
+    /* Native e-mail validation blocks the save: the field is invalid and the dialog stays. */
+    expect(await contactsPage.emailInput.evaluate((el: HTMLInputElement) => el.checkValidity())).toBe(false);
     await expect(contactsPage.dialog).toBeVisible();
     await contactsPage.cancelButton.click();
+    await expect(contactsPage.dialog).toBeHidden();
   });
 });

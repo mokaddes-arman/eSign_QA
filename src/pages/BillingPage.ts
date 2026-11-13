@@ -5,7 +5,8 @@ export class BillingPage extends BasePage {
   protected readonly path = '/account/billing';
 
   readonly heading = this.page.getByRole('heading', { level: 1, name: 'Billing & plan' });
-  readonly planCard = this.page.getByText('Free', { exact: true }).first();
+  /* Plan card heading renders as "Free Active" (name + status badge). */
+  readonly planCard = this.page.getByRole('heading', { level: 2, name: /^Free\b/ });
   readonly changePlanButton = this.page.getByRole('button', { name: 'Change plan' });
   readonly addSeatsButton = this.page.getByRole('button', { name: 'Add seats' });
   readonly addPaymentMethodButton = this.page.getByRole('button', { name: 'Add payment method' });

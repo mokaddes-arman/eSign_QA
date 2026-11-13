@@ -74,7 +74,7 @@ test.describe('Documents library @smoke', () => {
     await expect(documentsPage.page.getByRole('heading', { name: 'Templates' })).toBeVisible();
   });
 
-  test('creates a folder and shows it in the sidebar', async ({ documentsPage }, testInfo) => {
+  test('creates a folder and shows it in the sidebar @data', async ({ documentsPage }, testInfo) => {
     const folder = `QA Folder ${Date.now()}`;
     await documentsPage.createFolder(folder);
 
