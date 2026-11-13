@@ -54,4 +54,13 @@ test.describe('Contacts address book', () => {
     ).toBeVisible();
     await expect(contactsPage.page.getByRole('link', { name: email })).toBeVisible();
   });
+
+  test('rejects invalid email on save @regression', async ({ contactsPage }) => {
+    await contactsPage.openNewContact();
+    await contactsPage.fullNameInput.fill('QA Invalid');
+    await contactsPage.emailInput.fill('not-an-email');
+    await contactsPage.saveButton.click();
+    await expect(contactsPage.dialog).toBeVisible();
+    await contactsPage.cancelButton.click();
+  });
 });
