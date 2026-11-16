@@ -314,7 +314,7 @@ CI runs them with `KNOWN_BUGS=expect-fail`, so a fixed bug shows up as an unexpe
 | BUG-13 | S4 | Trust hero accessible name "eSignProhandles" | Walkthrough O8 | AUTH-021 | `tests/ui/public.ui.spec.ts` | Earlier spec loosened its regex to tolerate it |
 | BUG-14 | S4 | Change-plan dialog pre-selects Enterprise on Free | Walkthrough O6 | BIL-002 | `tests/ui/billing.ui.spec.ts` | "Enterprise $499.00" pre-selected |
 | BUG-15 | S4 | Registration error shown in neutral grey, not error colour | **UI layer 16 Nov** | AUTH-004 | `tests/ui/auth.ui.spec.ts` | "Name and company are required" in `rgb(79,104,139)`, the same grey as BUG-06, so form errors look wrong app-wide |
-| BUG-16 | S4 | React hydration error #418 (server/client text mismatch) | **UI layer 16 Nov** | NF-006 | `tests/ui/developer.ui.spec.ts` (Activity logs baseline) | Uncaught on `/developer/logs` every run; seen once on the Trash folder |
+| BUG-16 | S4 | **Intermittent** React hydration error #418 (server/client text mismatch) | **UI layer 16 Nov** | NF-006 | UI baseline records it as an `issue` annotation, not a failure | Thrown on every local run of `/developer/logs` on 16 Nov, then not reproduced locally or on CI in any timezone. Likely data-dependent (very recent log timestamps) |
 | BUG-17 | S3 | Saving a contact without a name does nothing | **UI layer 16 Nov** | CON-005 | `tests/ui/contacts.ui.spec.ts` | Dialog stays; no message; field not flagged |
 | BUG-18 | S3 | Webhook "Create endpoint" enabled for a non-URL value | **UI layer 16 Nov** | DEV-014 | `tests/ui/developer.ui.spec.ts` | Disabled when empty, enabled after typing "not a url" (never submitted) |
 

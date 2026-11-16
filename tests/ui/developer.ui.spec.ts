@@ -15,7 +15,9 @@ test.describe('UI · Developer platform', () => {
     { name: 'Plan usage', path: '/developer/api?section=usage', ready: h1 },
     { name: 'API console', path: '/developer/sandbox', ready: h1 },
     { name: 'Guides', path: '/developer/guides', ready: h1 },
-    { name: 'Activity logs', path: '/developer/logs', ready: h1, bug: KNOWN_BUGS.BUG16 },
+    /* BUG-16 (React hydration error) was seen here repeatedly on 16 Nov but is intermittent;
+       the baseline records it as an `issue` annotation instead of failing. */
+    { name: 'Activity logs', path: '/developer/logs', ready: h1 },
     { name: 'Partner program', path: '/developer/partner', ready: h1 },
   ]);
 

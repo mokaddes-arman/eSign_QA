@@ -357,7 +357,7 @@ signing, payments) is blocked until the quota is reset and CI authentication is 
 | Area | Status | Notes |
 |------|:------:|-------|
 | Manual findings | ✅ automated | BUG-01…BUG-09 each have a reproduction; all 9 reproduce on Chromium. BUG-10 (template Delete/Archive no-op) found while automating. Observations O6–O9 promoted to BUG-11…14 |
-| New findings from the UI layer | ✅ tracked | BUG-15 (form error grey), BUG-16 (React hydration error), BUG-17 (blank contact name silently ignored), BUG-18 (webhook URL validation). Constraints: single active session (R17), debounced autosave (R18) |
+| New findings from the UI layer | ✅ tracked | BUG-15 (form error grey), BUG-16 (intermittent React hydration error, recorded as annotation), BUG-17 (blank contact name silently ignored), BUG-18 (webhook URL validation). Constraints: single active session (R17), debounced autosave (R18) |
 | Test design | ✅ | `TEST_CASES.md`: 204 cases (14 new, stray rows fixed). `USER_FLOWS.md`: 50 flows |
 | UI layer | ✅ | 14 module UI specs (≈ 180 checks) |
 | Reporting | ✅ | Dashboard reporter with Known bugs and Modules tabs; opens after local runs; CI artifact + job summary |

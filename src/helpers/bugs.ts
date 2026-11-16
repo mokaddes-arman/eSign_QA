@@ -135,7 +135,7 @@ export const KNOWN_BUGS = {
   BUG16: {
     id: 'BUG-16',
     severity: 'S4',
-    summary: 'React hydration error #418 (server/client text mismatch) on Activity logs and the Trash folder',
+    summary: 'Intermittent React hydration error #418 (server/client text mismatch) on Activity logs and the Trash folder',
     expected: 'Pages hydrate without uncaught errors',
     caseId: 'NF-006',
   },
