@@ -13,8 +13,23 @@ export abstract class BasePage {
   async goto(): Promise<void> {
     await this.page.goto(this.path, { waitUntil: 'domcontentloaded' });
     await this.settle();
+    this.assertSessionNotSuperseded();
     await this.recoverFromApiOutage();
     await this.waitForReady();
+  }
+
+  /**
+   * The account allows one active session: any new sign-in elsewhere (another
+   * run, a teammate, `auth:save`) signs this one out with `?reason=superseded`.
+   * Fail with an actionable message instead of a locator timeout.
+   */
+  assertSessionNotSuperseded(): void {
+    if (/[?&]reason=superseded/.test(this.page.url())) {
+      throw new Error(
+        'Saved session was signed out because the account signed in elsewhere (single active session). ' +
+          'Run "npm run auth:refresh" and avoid parallel runs against the same account.',
+      );
+    }
   }
 
   /** Banner the app renders when a backend call times out ("Can't reach the eSignPro API"). */

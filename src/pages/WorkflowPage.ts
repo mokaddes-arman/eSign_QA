@@ -21,8 +21,29 @@ export class WorkflowPage extends BasePage {
   readonly branding = this.page.getByRole('heading', { name: 'Branding' });
   readonly deliverySimulation = this.page.getByRole('heading', { name: 'Delivery simulation' });
 
+  readonly recipientsRegion = this.page.getByRole('region', { name: 'Recipients & signing order' });
+  readonly beforeYouSendRegion = this.page.getByRole('region', { name: 'Before you send' });
+  readonly invitePreviewGroup = this.page.getByRole('group', { name: 'Invitation email preview' });
+  readonly reminderCadence = this.page.getByRole('group', { name: 'Reminder cadence' });
+  readonly expiresSelect = this.page.getByRole('combobox', { name: 'Expires' });
+  readonly openBuilderLink = this.page.getByRole('link', { name: 'Open builder' });
+  readonly prepareStepButton = this.page.getByRole('group', { name: 'Steps' }).getByRole('button', { name: 'Prepare' });
+
+  /** Checklist row about recipient e-mails ("Recipients need an email …"). */
+  readonly recipientEmailCheck = this.beforeYouSendRegion
+    .getByRole('listitem')
+    .filter({ hasText: /recipient/i })
+    .first();
+
+  /** Inline field error shown under a recipient e-mail (`.env-field-error`). */
+  readonly recipientFieldError = this.recipientsRegion.locator('.env-field-error, [id][role="alert"]').first();
+
+  saveRecipientEmailButton(index: number) {
+    return this.page.getByRole('button', { name: `Save Recipient ${index} email` });
+  }
+
   recipientEmail(index: number) {
-    return this.page.getByLabel(new RegExp(`Recipient ${index} email`, 'i'));
+    return this.page.getByRole('combobox', { name: new RegExp(`^Recipient ${index} email$`, 'i') });
   }
 
   recipientName(index: number) {

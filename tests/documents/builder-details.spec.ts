@@ -12,7 +12,7 @@ test.describe('Builder details', () => {
     await preparePage.continueLatestDraft();
   });
 
-  test('inspector exposes validation and conditional logic', async ({ page }) => {
+  test('inspector exposes validation and conditional logic', async ({ page, preparePage }) => {
     /* Fields may overlap; the last one in DOM order is on top and receives the click. */
     const placed = page.getByRole('button', { name: / for Recipient \d+, (required|optional)/ }).last();
     /* Canvas fields render after the builder heading; wait before deciding to skip. */
@@ -24,7 +24,8 @@ test.describe('Builder details', () => {
 
     await placed.click();
     await expect(page.getByRole('textbox', { name: 'Label' })).toBeVisible();
-    await expect(page.getByRole('combobox', { name: 'Assigned recipient' })).toBeVisible();
+    /* Also rendered in the selection float-bar, so use the page object's scoped locator. */
+    await expect(preparePage.assignedRecipientSelect).toBeVisible();
     for (const dim of ['X', 'Y', 'Width', 'Height']) {
       await expect(page.getByRole('spinbutton', { name: dim, exact: true })).toBeVisible();
     }

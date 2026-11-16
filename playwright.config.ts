@@ -12,6 +12,19 @@ export const AUTH_STATE = path.resolve(
 
 const hasAuthState = fs.existsSync(AUTH_STATE);
 
+/** Specs that use the shared newest draft envelope (see project `chromium-builder`). */
+const DRAFT_SPECS = [
+  '**/bugs/**/*.spec.ts',
+  '**/flows/envelope-preparation.flow.spec.ts',
+  '**/flows/library.flow.spec.ts',
+  '**/ui/prepare.ui.spec.ts',
+  '**/ui/workflow.ui.spec.ts',
+  '**/ui/signer.ui.spec.ts',
+  '**/documents/prepare.spec.ts',
+  '**/documents/builder-details.spec.ts',
+  '**/signer/signer.spec.ts',
+];
+
 export default defineConfig({
   testDir: './tests',
   /* Run tests in files in parallel */
@@ -29,6 +42,9 @@ export default defineConfig({
     ['list'],
     ['html', { open: 'never', outputFolder: 'playwright-report' }],
     ['junit', { outputFile: 'test-results/junit.xml' }],
+    /* Test-health dashboard (Overview, Known bugs, Modules, Failures…). Opens in a
+       new browser tab after a local run; never on CI. DASHBOARD_OPEN=never|always overrides. */
+    ['./reporters/dashboard-reporter.ts', { outputFile: 'dashboard-report/index.html', open: 'auto' }],
   ],
 
   use: {
@@ -45,6 +61,17 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
+      testIgnore: DRAFT_SPECS,
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
+    },
+    {
+      /* Specs that read or change the shared newest draft (fields, favourites, name,
+         preview, workflow). Run them one at a time so they never race each other;
+         every change is reverted in-test. Runs alongside the parallel `chromium` project. */
+      name: 'chromium-builder',
+      testMatch: DRAFT_SPECS,
+      workers: 1,
+      fullyParallel: false,
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
     },
     {

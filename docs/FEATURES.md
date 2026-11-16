@@ -1,7 +1,7 @@
 # eSignPro — Feature Inventory
 
 > Live walkthrough of **https://esignpro.net** re-verified on **13 Nov 2026** with the test
-> workspace **Global Softel** (`mokaddes.arman.2111+esignTest@gmail.com`, plan: Free, 1 seat).
+> workspace **Global Softel** (account in `.env` → `ESIGN_EMAIL`; plan: Free, 1 seat).
 > Every route below was opened in the authenticated app (49 routes, plus guest pages), and
 > menus/dialogs were opened and dismissed without submitting. Items marked *(not exercised)*
 > were seen but not driven end-to-end (they send e-mail, spend quota, move money, or
@@ -298,3 +298,8 @@ created.
 | O9 | Submitting an empty support ticket does nothing — no request, but also no validation message or field highlight. | `/support` → New ticket | S3 |
 | O10 | **Create key** creates a live key immediately with no name, scope or confirmation step. | `/developer/api?section=keys` | S3 |
 | O11 | Guests hitting an unknown route are sent to sign-in instead of seeing the 404 page. | any unknown route | S4 (by design?) |
+| O12 | **Single active session per account.** A new sign-in anywhere signs every other session out (`/login?reason=superseded`, "Signed out on this device"). Product behaviour, not a defect, but parallel runs or a teammate's login break the saved session. | global | — (constraint) |
+| O13 | Builder header says "N fields · autosaved" immediately, but the save request is sent ~0.7 s later (debounced). A reload inside that window shows the draft without the new field; it appears on a later load. | `/documents/{id}/prepare` | S4 |
+
+Defects confirmed on 16 Nov 2026 and tracked with reproduction tests: see
+[`TEST_CASES.md` §15](./TEST_CASES.md) (BUG-01…BUG-18).

@@ -43,6 +43,7 @@ export class Navigation {
 
   async signOutFromMenu(): Promise<void> {
     await this.page.getByRole('button', { name: /Account and help/ }).click();
-    await this.page.getByRole('button', { name: 'Sign out' }).click();
+    /* Account menu entries are role="menuitem", not buttons. */
+    await this.page.getByRole('menu', { name: 'Account and help' }).getByRole('menuitem', { name: 'Sign out' }).click();
   }
 }

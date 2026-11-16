@@ -17,7 +17,8 @@ async function main() {
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
 
   const browser = await chromium.launch({ headless: false });
-  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  /* baseURL is required: page objects navigate with relative paths ("/login"). */
+  const context = await browser.newContext({ baseURL: env.baseUrl, viewport: { width: 1440, height: 900 } });
   const page = await context.newPage();
 
   try {

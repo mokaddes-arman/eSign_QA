@@ -1,11 +1,27 @@
+# Dependencies
 node_modules/
+
+# Secrets — real credentials live only in .env (template: .env.example)
 .env
-.env.local
+.env.*
+!.env.example
+
+# Saved browser session (cookies for the test account)
 /auth/
+playwright/.auth/
+
+# Test output — reports embed screenshots, videos and traces of the signed-in workspace
 test-results/
 test-results*/
 playwright-report/
 blob-report/
+dashboard-report/
+playwright/.cache/
+
+# Tooling / scratch
 .playwright-mcp/
+scripts/.tmp-*
 *.log
+*.tsbuildinfo
 .DS_Store
+Thumbs.db

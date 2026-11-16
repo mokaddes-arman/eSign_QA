@@ -15,7 +15,9 @@ test.describe('Authentication · login', () => {
   });
 
   test('rejects an invalid password @regression', async ({ loginPage, page }) => {
-    await loginPage.emailInput.fill('mokaddes.arman.2111+esignTest@gmail.com');
+    /* A real account e-mail with a wrong password; read from .env, never hard-coded. */
+    test.skip(!process.env.ESIGN_EMAIL, 'ESIGN_EMAIL is not set');
+    await loginPage.emailInput.fill(process.env.ESIGN_EMAIL!);
     await loginPage.passwordInput.fill('Definitely-Wrong-Password1!');
     await loginPage.signInButton.click();
 

@@ -24,8 +24,81 @@ export class PreparePage extends BasePage {
   readonly pagesRegion = this.page.getByRole('region', { name: 'Pages' });
   readonly inspector = this.page.getByRole('button', { name: 'Hide Inspector' });
 
+  /* Header */
+  readonly fieldCounter = this.page.getByText(/^\d+ fields? · autosaved$/);
+  readonly renameDocumentButton = this.page.getByRole('button', { name: /^Rename document · / });
+  readonly documentNameInput = this.page.getByRole('textbox', { name: 'Document name' });
+
+  /* Palette */
+  readonly allFieldsTab = this.fieldPalette.getByRole('button', { name: 'All fields', exact: true });
+  readonly favouritesTab = this.fieldPalette.getByRole('button', { name: 'Favourites', exact: true });
+  /** Every placeable tile in the palette, in on-screen order. */
+  readonly paletteTiles = this.fieldPalette.getByRole('button', {
+    name: /^Place .+ — drag onto the page|^Pick the pen up/,
+  });
+
+  /* Canvas */
+  readonly placedFields = this.page.getByRole('button', { name: / for Recipient \d+, (required|optional)/ });
+  readonly documentLoading = this.page.getByText('Loading the document…');
+
+  /* Inspector (visible once a field is selected) */
+  readonly labelInput = this.page.getByRole('textbox', { name: 'Label', exact: true });
+  readonly placeholderInput = this.page.getByRole('textbox', { name: 'Placeholder', exact: true });
+  /* Rendered twice (inspector + a hidden copy); the first is the inspector's. */
+  readonly assignedRecipientSelect = this.page.getByRole('combobox', { name: 'Assigned recipient' }).first();
+
+  /* Dialogs */
+  readonly recipientsDialog = this.page.getByRole('dialog', { name: /Add recipients that need to fill out/ });
+  readonly saveTemplateDialog = this.page.getByRole('dialog', { name: 'Save as template' });
+  readonly templateNameInput = this.saveTemplateDialog.getByRole('textbox', { name: 'Template name' });
+
   fieldTile(name: string) {
     return this.fieldPalette.getByRole('button', { name: new RegExp(`^Place ${name}`) });
+  }
+
+  /** The star toggle next to a palette tile ("Add X to favourites" / "Remove X from favourites"). */
+  favouriteToggle(name: string) {
+    return this.fieldPalette.getByRole('button', {
+      name: new RegExp(`^(Add ${name} to|Remove ${name} from) favourites$`),
+    });
+  }
+
+  /** Palette tile names in on-screen order, each flagged as favourite or not. */
+  async paletteOrder(): Promise<{ name: string; favourite: boolean }[]> {
+    return this.fieldPalette.evaluate((root) => {
+      const out: { name: string; favourite: boolean }[] = [];
+      for (const btn of root.querySelectorAll('button[aria-label]')) {
+        const label = btn.getAttribute('aria-label') || '';
+        const m = label.match(/^(Add (.+) to|Remove (.+) from) favourites$/);
+        if (m) out.push({ name: (m[2] || m[3]).trim(), favourite: label.startsWith('Remove') });
+      }
+      return out;
+    });
+  }
+
+  async fieldCount(): Promise<number> {
+    await expect(this.fieldCounter).toBeVisible({ timeout: 15_000 });
+    return Number((await this.fieldCounter.innerText()).match(/^\d+/)![0]);
+  }
+
+  async waitForCanvas(): Promise<void> {
+    await this.documentLoading.waitFor({ state: 'hidden', timeout: 20_000 }).catch(() => undefined);
+  }
+
+  /** Recipient cards in the Recipients panel, e.g. "1 Recipient 1 Pending Needs to sign · 6 fields". */
+  readonly recipientCards = this.recipientsRegion.getByRole('button', { name: /^\d+ .+ · \d+ fields?$/ });
+
+  async selectField(index: 'first' | 'last' = 'last') {
+    await this.waitForCanvas();
+    const field = index === 'first' ? this.placedFields.first() : this.placedFields.last();
+    await field.click();
+    await expect(this.labelInput).toBeVisible();
+    return field;
+  }
+
+  async currentDocumentName(): Promise<string> {
+    const label = (await this.renameDocumentButton.getAttribute('aria-label')) || '';
+    return label.replace(/^Rename document · /, '');
   }
 
   async waitForReady(): Promise<void> {
@@ -48,9 +121,13 @@ export class PreparePage extends BasePage {
   async continueLatestDraft(): Promise<void> {
     const link = this.page.getByRole('link', { name: /Continue your most recent draft/ });
     await expect(link).toBeVisible({ timeout: 15_000 });
-    await link.click();
+    /* Navigate by href: a click before hydration is silently dropped. */
+    const href = await link.getAttribute('href');
+    if (href) await this.page.goto(href, { waitUntil: 'domcontentloaded' });
+    else await link.click();
     await expect(this.page).toHaveURL(/\/documents\/[0-9a-f-]+\/prepare/);
     await expect(this.heading).toBeVisible();
+    await this.settle();
   }
 
   async upload(filePath: string): Promise<void> {

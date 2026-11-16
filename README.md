@@ -10,9 +10,9 @@ account/security settings and billing.
 |---|---|
 | Base URL | `https://esignpro.net` |
 | Test workspace | **Global Softel** — Free plan |
-| Owner | Mokaddes SQA (`mokaddes.arman.2111+esignTest@gmail.com`) |
+| Owner | Mokaddes SQA (test account e-mail in `.env` → `ESIGN_EMAIL`) |
 | Runtime | Node.js ≥ 20 (CI uses 22), Playwright 1.65 |
-| Docs | [`docs/FEATURES.md`](docs/FEATURES.md) · [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md) · [`docs/TEST_CASES.md`](docs/TEST_CASES.md) |
+| Docs | [`docs/FEATURES.md`](docs/FEATURES.md) · [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md) · [`docs/TEST_CASES.md`](docs/TEST_CASES.md) · [`docs/USER_FLOWS.md`](docs/USER_FLOWS.md) |
 
 ---
 
@@ -30,7 +30,12 @@ npm run typecheck                 # TypeScript gate
 npm test                          # full suite, Chromium, uses the saved session
 npm run test:smoke                # only @smoke-tagged cases
 npm run report                    # open the last HTML report
+npm run report:dashboard          # re-open the test-health dashboard
 ```
+
+After every local run the **test-health dashboard** (`dashboard-report/index.html`) opens in
+a new browser tab: overview, failures with screenshots/traces, **Known bugs** and
+**Modules**. Set `DASHBOARD_OPEN=never` to suppress the tab, `always` to force it.
 
 A fresh checkout without `auth/storageState.json` still runs: authenticated specs will be
 redirected to `/login` and fail, so capture a session first (section 4).
@@ -57,7 +62,8 @@ esignpro-qa/
 │  │  ├─ AccountProfilePage.ts# /account/profile, /account/security
 │  │  └─ BillingPage.ts       # /account/billing
 │  ├─ components/Navigation.ts# sidebar, account menu, global search
-│  ├─ helpers/                # authFlow (login/signup/OTP), otp (IMAP), wait, logger
+│  ├─ helpers/                # authFlow (login/signup/OTP), otp (IMAP), wait, logger,
+│  │                          # ui (contrast, error colour, a11y), uiSuite (UI baseline), bugs (known-bug registry)
 │  ├─ fixtures/test.ts        # every page object + logStep as a test fixture
 │  └─ config/env.ts           # typed .env access
 ├─ tests/
@@ -69,13 +75,18 @@ esignpro-qa/
 │  ├─ reports/       reports.spec.ts
 │  ├─ developer/     developer.spec.ts
 │  ├─ support/       support.spec.ts
-│  ├─ account/       account.spec.ts
+│  ├─ account/       account.spec.ts · settings.spec.ts
+│  ├─ ui/            <module>.ui.spec.ts — one UI spec per module (baseline, 390 px, dark, module UI)
+│  ├─ flows/         <area>.flow.spec.ts — user journeys from docs/USER_FLOWS.md
+│  ├─ bugs/          reported-defects.spec.ts — one reproduction per reported defect (@bug)
 │  └─ fixtures/      sample-agreement.png (upload fixture)
+├─ reporters/        # dashboard-reporter.ts + template/assets → dashboard-report/index.html
 ├─ scripts/
 │  ├─ save-auth.ts   # interactive login → auth/storageState.json
+│  ├─ refresh-auth.ts# headless re-login with the trusted-device cookie (no OTP)
 │  └─ signup.ts      # full signup + OTP helper
 ├─ auth/storageState.json           # signed-in session (git-ignored)
-├─ docs/                            # features, test plan, test cases
+├─ docs/                            # features, test plan, test cases, user flows
 ├─ playwright.config.ts             # projects, reporters, retries, storage state
 └─ .github/workflows/playwright.yml # CI pipeline
 ```
@@ -95,6 +106,10 @@ All secrets live in **`.env`** (git-ignored). `.env.example` is the safe templat
 | `GMAIL_IMAP_HOST/PORT`, `GMAIL_USER`, `GMAIL_APP_PASSWORD` | Optional Gmail IMAP retrieval (Google **App Password**, not the account password). |
 | `RUN_SIGNUP` | `true` runs the real signup test (creates a *new* workspace and sends a new verification e-mail). |
 | `RUN_UPLOAD` | `true` runs tests that create a new draft (consumes a free-plan signature request). |
+| `RUN_PAYMENT`, `CARD_*` | `true` runs sandbox payment cases with the Stripe **test** card. |
+| `RUN_LOGIN_FLOW` | `true` runs UF-05 (real sign-in). The account allows **one active session**, so run it alone. |
+| `KNOWN_BUGS` | `strict` (default): bug tests fail while the bug exists. `expect-fail`: wrapped in `test.fail()` (CI). |
+| `DASHBOARD_OPEN` | `auto` (default, local only) · `always` · `never`. |
 
 Credentials for the live test workspace are already stored in `.env`; do not commit that
 file. If you regenerate it, keep `ESIGN_COMPANY_SIZE=1–50` (en dash) and use an app-specific
@@ -118,8 +133,10 @@ The saved file contains the `sf_session`, `esp_device`, `m` and Stripe cookies a
 reused by every spec, except `tests/auth/*`, which override `storageState` with an empty
 state to exercise the guest experience.
 
-If the session expires, re-run `npm run auth:save`; there is no silent refresh because the
-OTP requires mailbox access.
+If the session expires, run `npm run auth:refresh`: it signs in headlessly, and the
+trusted-device cookie (`esp_device`, ~90 days) skips the OTP. Only when that cookie
+expires (exit code 2) do you need `npm run auth:save` again. CI runs the refresh before
+every suite.
 
 ## 5. Test design conventions
 
@@ -133,7 +150,13 @@ OTP requires mailbox access.
 - **Quota-aware** — builder tests open the newest existing draft via
   *Continue your most recent draft* instead of uploading; uploads are `@quota` and gated by
   `RUN_UPLOAD=true`. The Free plan allows 6 signature requests/month and drafts count.
-- **Tags** — `@smoke` (fast, run on PR), `@regression`, `@e2e`, `@quota`. Use
+- **Outcome over presence** — use the control, then assert what the user sees elsewhere.
+  Check wording and colour for errors (`expectErrorStyled`) and contrast for text on
+  documents (`expectTextReadableOn`). Never write a known defect into an expectation:
+  add a `@bug` test asserting the correct behaviour instead (`src/helpers/bugs.ts`).
+- **Restore shared state** — builder/flow/bug tests revert every change in `finally`.
+- **Tags** — `@smoke` (fast, run on PR), `@regression`, `@e2e`, `@quota`, `@flow`, `@bug`,
+  `@data` (writes to the live workspace; excluded on CI), `@ux`. Use
   `npm run test:smoke` / `npm run test:regression`, or `npx playwright test --grep @e2e`.
 - **Artifacts** — trace, video and screenshot are retained on failure; JUnit is written to
   `test-results/junit.xml`.
@@ -171,8 +194,9 @@ MCP keeps its own browser profile, so its login is independent of
 
 `.github/workflows/playwright.yml` runs:
 
-- on **pull request** → Chromium `@smoke`;
-- on **push to `main`**, **nightly 02:00 UTC** and **manual dispatch** → full Chromium suite;
+- on **pull request** → Chromium `@smoke` (without `@data`/`@bug`);
+- on **push to `main`**, **nightly 02:00 UTC** and **manual dispatch** → full Chromium suite
+  without `@data`, known bugs in `expect-fail` mode;
 - on schedule/dispatch → `@smoke` in Firefox and WebKit.
 
 Configure these repository secrets:
@@ -194,10 +218,14 @@ Configure these repository secrets:
 base64 -w0 auth/storageState.json
 ```
 
-The workflow restores the file to `auth/storageState.json`, runs `npm ci`,
-`npx playwright install --with-deps chromium`, type-checks, executes the appropriate
-suite, and uploads `playwright-report/` and `test-results/` (HTML + JUnit) as artifacts for
-14 days. A warning (not a failure) is emitted when the session secret is absent.
+The workflow restores the file to `auth/storageState.json`, refreshes it
+(`scripts/refresh-auth.ts`), runs `npm ci`, `npx playwright install --with-deps chromium`,
+type-checks, executes the appropriate suite, and uploads `dashboard-report/`,
+`playwright-report/` and `test-results/` as artifacts for 7 days. The job summary shows the
+totals and how many known bugs still reproduce.
+
+> **The repository is public.** Reports, videos and traces show the signed-in workspace,
+> and traces contain session cookies. Keep artifact retention short, or make the repo private.
 
 ## 8. Commands
 
@@ -212,14 +240,22 @@ suite, and uploads `playwright-report/` and `test-results/` (HTML + JUnit) as ar
 | `RUN_UPLOAD=true npx playwright test --grep @quota` | Enable quota-consuming cases. |
 | `RUN_SIGNUP=true npx playwright test tests/auth/signup.spec.ts` | Real signup (needs inbox access). |
 | `npm run typecheck` | `tsc --noEmit`. |
-| `npm run auth:save` | Refresh the authenticated session. |
+| `npm run test:ui-checks` | Module UI specs (`tests/ui`). |
+| `npm run test:flows` | User-flow journeys (`tests/flows`). |
+| `npm run test:bugs` | Known-bug reproductions (`@bug`). |
+| `npm run test:ci` | Chromium + `chromium-builder` projects, everything except `@data` (what CI runs). |
+| `npx playwright test --project=chromium-builder` | Only the specs that use the shared draft (run one at a time). |
+| `npm run auth:save` | Interactive login with OTP → new session. |
+| `npm run auth:refresh` | Headless re-login (trusted device, no OTP). |
 | `npm run report` | Open the HTML report. |
+| `npm run report:dashboard` | Open the test-health dashboard. |
 
 ## 9. Troubleshooting
 
 | Symptom | Fix |
 |---|---|
-| Tests land on `/login` | Session expired → `npm run auth:save`. |
+| Tests land on `/login` | Session expired → `npm run auth:refresh` (or `auth:save` if it exits 2). |
+| "Signed out on this device" / `reason=superseded` | The account signed in elsewhere (one active session). `npm run auth:refresh`, and don't run two suites at once. |
 | OTP prompt times out | Set `OTP_CODE`, or configure `GMAIL_USER` + `GMAIL_APP_PASSWORD`. |
 | Upload test skipped | Expected; set `RUN_UPLOAD=true` and ensure quota is available. |
 | Upload stops at the prepare landing | Free-plan quota exhausted (sidebar shows `x / 6`); delete drafts or wait for renewal. |
@@ -231,9 +267,8 @@ suite, and uploads `playwright-report/` and `test-results/` (HTML + JUnit) as ar
 
 ## 10. Coverage & limitations
 
-- **Automated:** 47+ UI cases across auth, navigation, overview, documents, prepare,
-  workflow visibility, contacts, reports, developer, support, account, billing, plus
-  type-checked POMs for signer preview.
+- **Automated:** 105 fully + 37 partly automated cases across every module, 14 module UI
+  specs (≈ 180 checks), 8 user-flow journeys and 14 known-bug reproductions.
 - **Gated by environment:** live signup (`RUN_SIGNUP`), file upload / golden-path send
   (`RUN_UPLOAD` + quota), real recipient signing and payment charging (manual charters).
 - **Not automated:** actual card charges, inbound e-mail deliverability, external IdP SSO,

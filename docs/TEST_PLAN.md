@@ -3,10 +3,10 @@
 | Field | Value |
 |-------|-------|
 | Product | eSignPro (`https://esignpro.net`) |
-| Workspace under test | Global Softel — Free plan (`mokaddes.arman.2111+esignTest@gmail.com`) |
-| Document version | 1.1 |
+| Workspace under test | Global Softel — Free plan (account in `.env` → `ESIGN_EMAIL`) |
+| Document version | 1.2 |
 | Author | QA — Mokaddes SQA |
-| Date | 13 Nov 2026 (readiness review same day) |
+| Date | 13 Nov 2026 · revised 16 Nov 2026 after the manual bug session (§4.3, §16.1) |
 | Suite | Playwright + TypeScript, POM, GitHub Actions |
 | Status | Ready for execution with open items — see §16 |
 
@@ -92,7 +92,10 @@ e-mail OTP.
 | Cross-browser | Chromium, Firefox, WebKit | Playwright projects |
 | Security (light) | Auth redirects, session artefact, no secret leakage in UI, device control | Manual + Playwright |
 | Regression | Tagged `@smoke` (fast, every push) and `@regression` (full, nightly/manual) | Playwright grep |
-| Exploratory | Charter-based sessions on new/odd states (quota reached, empty workspace) | Manual |
+| **Module UI** | One spec per module (`tests/ui/<module>.ui.spec.ts`): baseline a11y/layout/raw-value/JS-error checks, 390 px, dark scheme, error-colour and contrast assertions | Playwright + `src/helpers/ui.ts` |
+| **User flows** | Cross-screen journeys from [`USER_FLOWS.md`](./USER_FLOWS.md) (`tests/flows/*.flow.spec.ts`), one `test.step` per step, soft checkpoints | Playwright |
+| **Known bugs** | One reproduction per reported defect (`tests/bugs`, `@bug`), asserting the correct behaviour; tracked on the dashboard | Playwright + `src/helpers/bugs.ts` |
+| Exploratory | Charter-based sessions on new/odd states (quota reached, empty workspace, dark documents, many recipients) | Manual |
 
 ### 4.1 Prioritisation
 
@@ -120,6 +123,24 @@ e-mail OTP.
 
 ◐ = planned/manual because it requires a real recipient mailbox or consumes the monthly quota.
 
+### 4.3 Lessons from the 16 Nov 2026 manual session
+
+Nine defects (BUG-01…BUG-09) were found by hand that the suite should have caught.
+A tenth (BUG-10) was found while automating them. Root causes and countermeasures:
+
+| Root cause | Example | Countermeasure (now in place) |
+|------------|---------|-------------------------------|
+| Specs asserted that a control **exists**, not what **happens** when it is used | Favourite toggle present; Placeholder input present | Flows use the control, then check the outcome where a user would look (`tests/flows`, `USER_FLOWS.md` checkpoints) |
+| No **visual / semantic** assertions | Wrong error colour, raw validator text, unreadable field text | `expectErrorStyled`, `expectTextReadableOn` (WCAG contrast), wording checks; error-colour checks in every UI spec |
+| Known defects were **written into expectations** | O9 "nothing happens" asserted as pass; O8 regex loosened | Rule: a spec never encodes a known defect as expected. Defects become `@bug` tests that assert the correct behaviour (BUG-11…14) |
+| No **cross-screen** journeys | Switching documents, preview for all recipients, unique names | 50 user flows catalogued; the builder flows are automated |
+| **Single-state** test data | One draft, one recipient, light theme, white page | Bug/UI checks cover dark page colour, dark scheme, duplicate names and 390 px. Second-recipient data is planned (§6) |
+| **Happy-path-only** negative testing | Only the empty form was submitted | Boundary inputs (255+ chars, duplicates, empty recipient) added to builder and template cases |
+
+**Definition of done for a feature (new):** flow row in `USER_FLOWS.md` with checkpoints,
+module UI check updated, negative/boundary cases in `TEST_CASES.md`, no `@bug` test
+asserting the broken behaviour.
+
 ## 5. Environments & access
 
 | Item | Value |
@@ -130,7 +151,7 @@ e-mail OTP.
 | Auth state | `auth/storageState.json` (cookies: `sf_session`, `esp_device`, `m`, Stripe IDs) |
 | Credentials | `.env` (git-ignored); template in `.env.example` |
 | OTP | `OTP_CODE`, Gmail IMAP (`imap.gmail.com:993` + app password), or interactive prompt |
-| Artifacts | `playwright-report/` (HTML), `test-results/` (JUnit, traces, video, screenshots) |
+| Artifacts | `dashboard-report/index.html` (test-health dashboard, opens in a new tab after a local run), `playwright-report/` (HTML), `test-results/` (JUnit, traces, video, screenshots) |
 | CI | GitHub Actions — `.github/workflows/playwright.yml` |
 
 ### 5.1 Auth-state bootstrap
@@ -145,6 +166,11 @@ npm test               # headless runs reuse auth/storageState.json
 `auth/storageState.json` is intentionally git-ignored. CI restores it from the
 `AUTH_STORAGE_STATE_B64` secret (base64 of the same file).
 
+`npm run auth:refresh` (also the first CI step) re-signs in headlessly when the ~12 h
+`sf_session` cookie has expired. The ~90-day trusted-device cookie `esp_device` skips the
+e-mail OTP, so the secret only needs regenerating when that device cookie expires
+(exit code 2 → run `npm run auth:save`).
+
 ## 6. Test data
 
 | Data | Source | Notes |
@@ -156,6 +182,8 @@ npm test               # headless runs reuse auth/storageState.json
 | Contacts | Generated per run (`QA Contact <timestamp>`) | Opens the new contact's detail page after save. |
 | Folders | Generated per run (`QA Folder <timestamp>`) | Cleanup is manual (Trash/Archive). |
 | Support tickets | Created only in manual negative runs | Empty-submit validation is automated. |
+| Templates | One fixed test template name, `QA Template (uniqueness check)` | BUG-07 reuses it so runs never pile up templates; while BUG-10 (delete no-op) is open, two copies remain in Templates. |
+| Second recipient | **Planned** — a draft with ≥ 2 recipients and their own fields | Needed for real per-recipient preview and routing checks (BUG-03, WF-002). Create it once when the quota resets. |
 | API keys | Not created automatically | **Create key creates a key instantly (no confirm)** — specs must never click it. Secret is shown once; avoid leaking into logs. Two TEST keys created during the 13 Nov exploration were revoked the same day (they still list as "revoked" with a Restore option). |
 
 **Quota caution.** The Free plan allows 6 signature requests per month and drafts consume
@@ -195,6 +223,9 @@ mid-run. Resume after a fresh session is saved and data is cleaned; re-run `@smo
 | P2 — Core | Library actions, filters/folders, Prepare builder + inspector, Workflow options, Contacts, Report sections, Developer tools, Account settings pages, Billing dialogs | ~70 | `tests/documents/*.spec.ts`, `tests/contacts`, `tests/developer`, `tests/reports`, `tests/account/settings.spec.ts` | Nightly / pre-release |
 | P3 — Extended | Live signup, upload/golden path, sending & signing, row-action behaviour, persistence of settings, payments | ~70 manual + gated | Gated specs (`RUN_SIGNUP`, `RUN_UPLOAD`, `RUN_PAYMENT`) + manual charters | Weekly / release candidate |
 | P4 — Non-functional | Accessibility, responsive, cross-browser, session/deep links, 404 | ~10 | All projects + manual audit | Release candidate |
+| P5 — Module UI | Every module: baseline, 390 px, dark scheme, module UI states | ≈ 180 checks | `tests/ui/*.ui.spec.ts` | Nightly / pre-release |
+| P6 — User flows | Builder, library, contacts, reports, account, billing, guest journeys | 8 journeys (50 catalogued) | `tests/flows/*.flow.spec.ts` | Nightly / pre-release |
+| P7 — Known bugs | BUG-01…BUG-14 reproductions | 14 | `tests/bugs`, `@bug` in `tests/ui` | Every full run (CI: `KNOWN_BUGS=expect-fail`) |
 
 ## 9. Schedule (indicative)
 
@@ -231,7 +262,12 @@ mid-run. Resume after a fresh session is saved and data is cleaned; re-run `@smo
 | R10 | Session expiry mid-run | **High** | **High** | `sf_session` lives ~12 h, so the `AUTH_STORAGE_STATE_B64` secret is stale before the next nightly run. Configure `GMAIL_USER` + `GMAIL_APP_PASSWORD` so CI can log in with OTP, or refresh the secret before each run |
 | R11 | Backend timeouts under parallel load | Medium | Medium | Pages show "Can't reach the eSignPro API"; `BasePage.goto()` reloads once, failures beyond that are logged as defects (FEATURES O1) |
 | R12 | Monthly quota already exhausted (6/6 until 13 Dec 2026) | High | High | Upload, send and golden-path cases are blocked; reset quota, start an Enterprise trial, or use a fresh workspace |
-| R13 | Live-site writes from automation | High | Low | 21 folders and 8 contacts already accumulated; tag every write test `@data`, exclude it from nightly or add cleanup |
+| R13 | Live-site writes from automation | High | Low | 21+ folders and 8+ contacts accumulated. Every write test is tagged `@data` and **CI excludes `@data`** (`--grep-invert @data`); run them locally |
+| R14 | **Public repository** exposes test-run artifacts | High | High | Reports, videos and traces show the signed-in workspace, and traces include request cookies. Artifact retention cut to 7 days. **Decision needed:** make the repo private, or disable trace/video on CI |
+| R15 | Shared-draft mutation by builder/flow/bug tests | Medium | Medium | Every change is reverted in `finally` (placeholder, favourites, name, placed field). All draft specs run in the `chromium-builder` project with `workers: 1`, so they never race each other (seen on 16 Nov: a 2-worker run let a flow delete a field another spec was clicking) |
+| R16 | Template clean-up impossible while BUG-10 is open | High | Low | Fixed template name caps pollution at 2 templates; delete them once BUG-10 is fixed |
+| R17 | **Single active session per account** (FEATURES O12) | High | High | Any sign-in during a run (UF-05, `auth:save`, a teammate, a second CI job) signs out the shared session and every later test lands on `/login?reason=superseded`. `BasePage.goto()` now fails fast with a clear message. UF-05 is opt-in (`RUN_LOGIN_FLOW=true`, run alone). CI keeps `concurrency` per ref; never run two suites against the account at once. A dedicated CI account would remove the risk |
+| R18 | Debounced autosave (FEATURES O13) | Medium | Low | Flows wait for network idle before reloading or leaving the builder |
 
 ## 12. Defect management
 
@@ -252,6 +288,14 @@ trace, video and screenshot; bug report links the test case ID and artifact path
 - Defects: count by severity, age, module; escape rate.
 - Quality gates: smoke green on PR, full green nightly, zero P0/P1 open before release.
 - Reports: Playwright HTML + JUnit uploaded from CI; summary posted on the PR.
+- **Test-health dashboard** (`reporters/dashboard-reporter.ts`): one self-contained HTML file
+  written to `dashboard-report/index.html` after every run and opened in a new browser tab
+  locally (`DASHBOARD_OPEN=never|always` overrides). Tabs: Overview (pass-rate ring,
+  20-run trend, stats, known bugs open), Tests (search), Failures (clustered errors with
+  screenshot/video/trace links), **Known bugs** (BUG id, state, severity, expected vs
+  actual), **Modules** (per-module health by layer: functional / UI / flow / bug),
+  Breakdown, Slowest, Timeline. Secrets in error text are redacted. CI uploads it as the
+  `test-dashboard-chromium` artifact and writes the totals to the job summary.
 
 ## 14. CI/CD integration
 
@@ -259,10 +303,17 @@ The GitHub Actions workflow:
 
 1. Triggers on push/PR to `main`, nightly at 02:00 UTC and on demand.
 2. Installs Node 22, `npm ci`, Chromium with dependencies.
-3. Restores `auth/storageState.json` from `AUTH_STORAGE_STATE_B64`.
-4. Runs smoke (`@smoke`) on PRs and the full suite on `main`/nightly.
-5. Uploads `playwright-report` and `test-results` artifacts (14-day retention).
-6. Fails the job on any failed test (skips do not fail).
+3. Restores `auth/storageState.json` from `AUTH_STORAGE_STATE_B64`, then refreshes it
+   headlessly (`scripts/refresh-auth.ts`, trusted device; no OTP).
+4. Runs smoke (`@smoke`, excluding `@data`/`@bug`) on PRs and the full suite on
+   `main`/nightly, excluding `@data`. Known-bug tests run with `KNOWN_BUGS=expect-fail`.
+5. Uploads `test-dashboard`, `playwright-report` and `test-results` artifacts (7-day retention, R14).
+6. Writes pass/fail/flaky/skipped, pass rate and known bugs reproduced to the job summary.
+7. Fails the job on any unexpected result: a new failure, **or a known bug that no longer
+   reproduces** (time to promote its test).
+
+Jobs that sign in never overlap (single active session, R17): the Firefox/WebKit smoke
+job runs after Chromium with `max-parallel: 1`.
 
 Manual gates: OTP refresh when the session expires, quota reset, and any approval before
 switching to a paid plan or sending real envelopes to third parties.
@@ -277,6 +328,11 @@ switching to a paid plan or sending real envelopes to third parties.
 - `.env` / `.env.example` — credentials and configuration (`.env` git-ignored).
 - `auth/storageState.json` — reusable signed-in session (git-ignored).
 - `.github/workflows/playwright.yml` — CI pipeline.
+- `docs/USER_FLOWS.md` — catalogue of every user flow with checkpoints and automation status.
+- `tests/ui/*.ui.spec.ts` — one UI spec per module; `tests/flows/*.flow.spec.ts` — journeys;
+  `tests/bugs/*` — defect reproductions; `src/helpers/{ui,bugs,uiSuite}.ts`.
+- `reporters/` — test-health dashboard reporter (`dashboard-report/index.html`).
+- `scripts/refresh-auth.ts` — OTP-free session refresh (`npm run auth:refresh`).
 - Playwright HTML/JUnit reports per run.
 
 ## 16. Readiness review — 13 Nov 2026
@@ -295,3 +351,16 @@ switching to a paid plan or sending real envelopes to third parties.
 
 **Verdict:** the plan is ready for P1/P2 execution (smoke + core). P3 (golden path, sending,
 signing, payments) is blocked until the quota is reset and CI authentication is solved.
+
+### 16.1 Update — 16 Nov 2026
+
+| Area | Status | Notes |
+|------|:------:|-------|
+| Manual findings | ✅ automated | BUG-01…BUG-09 each have a reproduction; all 9 reproduce on Chromium. BUG-10 (template Delete/Archive no-op) found while automating. Observations O6–O9 promoted to BUG-11…14 |
+| New findings from the UI layer | ✅ tracked | BUG-15 (form error grey), BUG-16 (React hydration error), BUG-17 (blank contact name silently ignored), BUG-18 (webhook URL validation). Constraints: single active session (R17), debounced autosave (R18) |
+| Test design | ✅ | `TEST_CASES.md`: 204 cases (14 new, stray rows fixed). `USER_FLOWS.md`: 50 flows |
+| UI layer | ✅ | 14 module UI specs (≈ 180 checks) |
+| Reporting | ✅ | Dashboard reporter with Known bugs and Modules tabs; opens after local runs; CI artifact + job summary |
+| Auth for CI | ✅ improved | `auth:refresh` re-signs in without OTP using the trusted-device cookie (R10) |
+| Repository hygiene | ⚠️ action needed | The test-account password appeared in `TEST_CASES.md` (AUTH-005) and the account e-mail in four tracked files of this **public** repo. Removed from the working tree; still in git history. **Rotate the password**; optionally purge history. `.gitignore` extended (`.env.*`, `dashboard-report/`, scratch files) |
+| Payment config | ⚠️ open | `.env` `CARD_NUMBER` is 18 digits; `.env.example` now documents the 16-digit Stripe test card |

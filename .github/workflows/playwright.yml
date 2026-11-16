@@ -26,9 +26,14 @@ env:
   ESIGN_COMPANY_TYPE: ${{ vars.ESIGN_COMPANY_TYPE || 'Other' }}
   ESIGN_COMPANY_SIZE: ${{ vars.ESIGN_COMPANY_SIZE || '1–50' }}
   AUTH_STATE_PATH: auth/storageState.json
-  # Quota-consuming / real-signup cases stay opt-in on CI.
+  # Quota-consuming / real-signup / payment cases stay opt-in on CI.
   RUN_UPLOAD: 'false'
   RUN_SIGNUP: 'false'
+  RUN_PAYMENT: 'false'
+  # Known-bug checks are wrapped in test.fail(): the job stays green while a reported
+  # defect is still open and turns red when one is fixed (promote it to a normal test).
+  KNOWN_BUGS: expect-fail
+  DASHBOARD_OPEN: never
 
 jobs:
   chromium:
@@ -64,24 +69,49 @@ jobs:
             echo "::warning title=Missing session::AUTH_STORAGE_STATE_B64 is not set; authenticated specs will fail."
           fi
 
+      - name: Refresh session (trusted device, no OTP)
+        run: |
+          set +e
+          npx tsx scripts/refresh-auth.ts
+          code=$?
+          if [ "$code" = "2" ]; then
+            echo "::warning title=Session::Device no longer trusted — run 'npm run auth:save' locally and update AUTH_STORAGE_STATE_B64."
+          elif [ "$code" != "0" ]; then
+            echo "::warning title=Session::Session refresh failed (exit $code)."
+          fi
+          exit 0
+
       - name: Type check
         run: npm run typecheck
 
       - name: Smoke suite (pull requests)
         if: github.event_name == 'pull_request'
-        run: npx playwright test --project=chromium --grep @smoke
+        run: npx playwright test --project=chromium --project=chromium-builder --grep @smoke --grep-invert "@data|@bug"
 
+      # Functional + UI + flows + known-bug checks. @data cases write to the live
+      # workspace (folders, contacts, templates) and stay local/manual (TEST_PLAN R13).
       - name: Full suite (main, nightly, manual)
         if: github.event_name != 'pull_request'
-        run: npx playwright test --project=chromium
+        run: npx playwright test --project=chromium --project=chromium-builder --grep-invert @data
 
+      # Artifacts show the signed-in workspace and traces carry session cookies.
+      # The repository is public, so keep retention short (see TEST_PLAN §14).
       - name: Upload HTML report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report-chromium
           path: playwright-report/
-          retention-days: 14
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Upload test dashboard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-dashboard-chromium
+          path: dashboard-report/
+          retention-days: 7
           if-no-files-found: ignore
 
       - name: Upload test results (JUnit, traces, video, screenshots)
@@ -90,7 +120,7 @@ jobs:
         with:
           name: test-results-chromium
           path: test-results/
-          retention-days: 14
+          retention-days: 7
           if-no-files-found: ignore
 
       - name: Job summary
@@ -100,17 +130,25 @@ jobs:
             echo "## Playwright — Chromium"
             echo ""
             echo "- Trigger: \`${{ github.event_name }}\` on \`${{ github.ref_name }}\`"
+            echo "- Dashboard: \`test-dashboard-chromium\` artifact (open \`index.html\`)"
             echo "- Report: \`playwright-report-chromium\` artifact"
             echo "- Results: \`test-results-chromium\` artifact (JUnit + traces)"
+            if [ -f dashboard-report/last-run.json ]; then
+              node -e "const r=require('./dashboard-report/last-run.json');const t=r.totals;console.log('');console.log('| Total | Passed | Failed | Flaky | Skipped | Pass rate | Known bugs reproduced |');console.log('|---:|---:|---:|---:|---:|---:|---:|');console.log('| '+[t.total,t.passed,t.failed,t.flaky,t.skipped,(r.passRate*100).toFixed(1)+'%',r.bugsOpen].join(' | ')+' |')"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
+  # The test account allows ONE active session (FEATURES O12): jobs that sign in must
+  # not overlap, or they sign each other out. Run after Chromium, one browser at a time.
   cross-browser:
     name: ${{ matrix.browser }} — smoke (schedule / manual)
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: chromium
+    if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         browser: [firefox, webkit]
 
@@ -141,8 +179,11 @@ jobs:
             echo "::warning title=Missing session::AUTH_STORAGE_STATE_B64 is not set."
           fi
 
+      - name: Refresh session (trusted device, no OTP)
+        run: npx tsx scripts/refresh-auth.ts || echo "::warning title=Session::refresh failed"
+
       - name: Smoke suite
-        run: npx playwright test --project=${{ matrix.browser }} --grep @smoke
+        run: npx playwright test --project=${{ matrix.browser }} --grep @smoke --grep-invert "@data|@bug"
 
       - name: Upload report
         if: always()
@@ -150,7 +191,7 @@ jobs:
         with:
           name: playwright-report-${{ matrix.browser }}
           path: playwright-report/
-          retention-days: 14
+          retention-days: 7
           if-no-files-found: ignore
 
       - name: Upload results
@@ -159,5 +200,5 @@ jobs:
         with:
           name: test-results-${{ matrix.browser }}
           path: test-results/
-          retention-days: 14
+          retention-days: 7
           if-no-files-found: ignore

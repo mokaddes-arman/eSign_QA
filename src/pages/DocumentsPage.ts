@@ -32,7 +32,11 @@ export class DocumentsPage extends BasePage {
   readonly timeFilter = this.page.getByLabel('Filter by time');
   readonly ownerFilter = this.page.getByLabel('Filter by owner');
 
-  readonly rows = this.page.locator('tbody tr');
+  /* The library renders documents as a list (role=list > listitem), not a table. */
+  readonly rows = this.page
+    .getByRole('main')
+    .getByRole('listitem')
+    .filter({ has: this.page.getByRole('button', { name: 'More actions' }) });
   readonly emptyTitle = this.page.getByText(/Nothing in Documents|No .* yet/);
 
   folderLink(name: DocumentView) {
@@ -95,5 +99,47 @@ export class DocumentsPage extends BasePage {
 
   rowByName(name: string | RegExp) {
     return this.rows.filter({ hasText: name });
+  }
+
+  /** The document title button inside a row (opens the builder). */
+  rowTitle(row: ReturnType<DocumentsPage['rowByName']>) {
+    return row.getByRole('button').filter({ hasNotText: /^(Prepare and send|Use template|More actions)$/ }).first();
+  }
+
+  /** Templates folder items (rendered as a list, not a table). */
+  templateItems(name?: string) {
+    const items = this.page
+      .getByRole('list', { name: 'Templates' })
+      .getByRole('listitem')
+      .filter({ has: this.page.getByRole('button', { name: 'Use template' }) });
+    return name ? items.filter({ has: this.page.getByRole('button', { name, exact: true }) }) : items;
+  }
+
+  /**
+   * Deletes every template whose title is exactly `name`. Only ever call this
+   * with a unique, test-generated name (e.g. "QA Template <timestamp>").
+   * Returns how many were deleted.
+   */
+  async deleteTemplatesNamed(name: string): Promise<number> {
+    if (!/^QA /.test(name)) throw new Error(`Refusing to delete non-test template "${name}"`);
+    await this.page.goto('/documents?folder=templates', { waitUntil: 'domcontentloaded' });
+    await this.settle();
+    let deleted = 0;
+    for (let guard = 0; guard < 10; guard++) {
+      const items = this.templateItems(name);
+      const count = await items.count();
+      if (count === 0) break;
+      await items.first().getByRole('button', { name: 'More actions' }).click();
+      await this.page.getByRole('menu', { name: `Actions for ${name}` }).getByRole('menuitem', { name: 'Delete', exact: true }).click();
+      /* A confirmation may follow; accept it if present. */
+      const confirm = this.page
+        .getByRole('alertdialog')
+        .or(this.page.getByRole('dialog'))
+        .getByRole('button', { name: /^(Delete|Move to trash|Confirm|Yes)/ });
+      if (await confirm.first().isVisible({ timeout: 2_000 }).catch(() => false)) await confirm.first().click();
+      await expect(items).toHaveCount(count - 1, { timeout: 10_000 });
+      deleted++;
+    }
+    return deleted;
   }
 }
