@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 /**
  * Polls `probe` until it returns a truthy value or the timeout elapses.
@@ -31,6 +31,27 @@ export async function waitForCondition<T>(
 /** Small random pause to avoid hammering the UI in visual flows. */
 export async function humanPause(page: Page, ms = 250): Promise<void> {
   await page.waitForTimeout(ms);
+}
+
+/**
+ * Clicks `trigger` until `expected` is visible (TEST_PLAN R3).
+ *
+ * Under backend latency, and with trace/video recording on, a click can land
+ * before React has attached its handler and is silently dropped — the page looks
+ * ready but the dialog/menu never opens. Re-clicking only while the expected UI
+ * is absent makes the action reliable without double-toggling stateful controls.
+ */
+export async function clickUntilVisible(
+  trigger: Locator,
+  expected: Locator,
+  options: { timeout?: number; attemptTimeout?: number; what?: string } = {},
+): Promise<void> {
+  const { timeout = 20_000, attemptTimeout = 3_000, what } = options;
+  const message = what ?? `Clicking ${trigger} did not show ${expected}`;
+  await expect(async () => {
+    if (!(await expected.isVisible().catch(() => false))) await trigger.click();
+    await expect(expected, message).toBeVisible({ timeout: attemptTimeout });
+  }, message).toPass({ timeout });
 }
 
 /**

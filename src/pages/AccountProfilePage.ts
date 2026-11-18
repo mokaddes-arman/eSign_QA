@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
+import { clickUntilVisible } from '../helpers/wait';
 
 export class AccountProfilePage extends BasePage {
   protected readonly path = '/account/profile';
@@ -9,10 +10,10 @@ export class AccountProfilePage extends BasePage {
   readonly emailInput = this.page.getByRole('textbox', { name: 'Email' });
   readonly timeZoneSelect = this.page.getByLabel('Time zone');
   readonly languageSelect = this.page.getByLabel('Language');
-  readonly saveButton = this.page.getByRole('button', { name: 'Save changes' });
-  readonly changePasswordButton = this.page.getByRole('button', { name: 'Change password' });
-  readonly addSignatureButton = this.page.getByRole('button', { name: 'Add signature' });
-  readonly addPhotoButton = this.page.getByRole('button', { name: 'Add photo' });
+  readonly saveButton = this.healButton('Save changes', false);
+  readonly changePasswordButton = this.healButton('Change password', false);
+  readonly addSignatureButton = this.healButton('Add signature', false);
+  readonly addPhotoButton = this.healButton('Add photo', false);
 
   readonly themeGroup = this.page.getByRole('radiogroup', { name: 'Colour mode' });
   readonly lightTheme = this.page.getByRole('radio', { name: 'Light' });
@@ -32,8 +33,7 @@ export class AccountProfilePage extends BasePage {
   }
 
   async openChangePassword(): Promise<void> {
-    await this.changePasswordButton.click();
-    await expect(this.changePasswordDialog).toBeVisible();
+    await clickUntilVisible(this.changePasswordButton, this.changePasswordDialog, { what: "The Change password dialog did not open" });
   }
 
   async openSignatureDialog(): Promise<void> {

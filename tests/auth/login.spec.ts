@@ -1,4 +1,5 @@
 import { test, expect } from '../../src/fixtures/test';
+import { requireData, requireEnv } from '../../src/helpers/precondition';
 
 /* Sign-in is a guest-only surface: never reuse the saved session. */
 test.use({ storageState: { cookies: [], origins: [] } });
@@ -16,7 +17,7 @@ test.describe('Authentication · login', () => {
 
   test('rejects an invalid password @regression', async ({ loginPage, page }) => {
     /* A real account e-mail with a wrong password; read from .env, never hard-coded. */
-    test.skip(!process.env.ESIGN_EMAIL, 'ESIGN_EMAIL is not set');
+    requireEnv('ESIGN_EMAIL', 'try a wrong password on a real account');
     await loginPage.emailInput.fill(process.env.ESIGN_EMAIL!);
     await loginPage.passwordInput.fill('Definitely-Wrong-Password1!');
     await loginPage.signInButton.click();

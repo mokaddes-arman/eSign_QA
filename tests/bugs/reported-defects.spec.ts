@@ -1,4 +1,5 @@
 import { test, expect } from '../../src/fixtures/test';
+import { requireData } from '../../src/helpers/precondition';
 import { KNOWN_BUGS, UNIQUENESS_TEMPLATE, knownBug, expectBugsToFail } from '../../src/helpers/bugs';
 import { BLACK, WHITE, expectErrorStyled, expectTextReadableOn, isErrorColor } from '../../src/helpers/ui';
 
@@ -43,9 +44,17 @@ test.describe('Reported defects — builder, preview and workflow', () => {
   test('BUG-02 favourited fields move to the top of the palette', knownBug(KNOWN_BUGS.BUG02), async ({ preparePage }) => {
     const standard = async () => (await preparePage.paletteOrder()).filter((t) => t.name !== 'Payment');
     const before = await standard();
-    /* Pick the last tile that is not yet a favourite, so a correct palette must move it up. */
-    const target = [...before].reverse().find((t) => !t.favourite);
-    test.skip(!target, 'Every palette field is already a favourite');
+    /* Pick the last tile that is not yet a favourite, so a correct palette must move it up.
+       If every field is a favourite, un-favourite the last one first (restored below), so
+       the case always runs instead of being skipped. */
+    let madeRoom: string | undefined;
+    let target = [...before].reverse().find((t) => !t.favourite);
+    if (!target) {
+      madeRoom = before[before.length - 1].name;
+      await preparePage.favouriteToggle(madeRoom).click();
+      await expect(preparePage.favouriteToggle(madeRoom)).toHaveAttribute('aria-pressed', 'false');
+      target = { name: madeRoom, favourite: false };
+    }
 
     await preparePage.favouriteToggle(target!.name).click();
     try {
@@ -65,9 +74,11 @@ test.describe('Reported defects — builder, preview and workflow', () => {
         )
         .toBe(true);
     } finally {
-      /* Restore the user's favourites. */
-      await preparePage.favouriteToggle(target!.name).click();
-      await expect(preparePage.favouriteToggle(target!.name)).toHaveAttribute('aria-pressed', 'false');
+      /* Restore the user's favourites (a field we un-favourited stays a favourite). */
+      if (!madeRoom) {
+        await preparePage.favouriteToggle(target!.name).click();
+        await expect(preparePage.favouriteToggle(target!.name)).toHaveAttribute('aria-pressed', 'false');
+      }
     }
   });
 
@@ -111,7 +122,7 @@ test.describe('Reported defects — builder, preview and workflow', () => {
       const results = search.getByRole('listbox', { name: 'Search results' }).getByRole('option');
       await expect(results.first()).toBeVisible();
       const documents = (await results.count()) - 1; // last option is "See all documents matching …"
-      test.skip(documents < 2 && skip === 0, 'Need at least two documents to switch between');
+      if (skip === 0) requireData(documents >= 2, `global search must return at least two documents to switch between; it returned ${documents}`);
       if (skip >= documents) break;
       await results.nth(skip).click();
 
@@ -133,7 +144,7 @@ test.describe('Reported defects — builder, preview and workflow', () => {
   });
 
   test('BUG-05 placeholder text is shown on the editing canvas', knownBug(KNOWN_BUGS.BUG05), async ({ preparePage }) => {
-    test.skip((await preparePage.placedFields.count()) === 0, 'Draft has no placed fields');
+    await preparePage.requirePlacedFields();
     const field = await preparePage.selectField('last');
     const placeholder = `QA placeholder ${Date.now() % 100000}`;
     const original = await preparePage.placeholderInput.inputValue();
@@ -243,7 +254,7 @@ test.describe('Reported defects — builder, preview and workflow', () => {
     await documentsPage.settle();
     const items = documentsPage.templateItems(UNIQUENESS_TEMPLATE);
     const before = await items.count();
-    test.skip(before < 2, `Needs two "${UNIQUENESS_TEMPLATE}" templates (left by BUG-07) so one can be deleted safely`);
+    requireData(before >= 2, `two "${UNIQUENESS_TEMPLATE}" templates are needed (left by BUG-07) so one can be deleted safely; found ${before}`);
 
     const writes: string[] = [];
     page.on('request', (r) => {
@@ -257,7 +268,7 @@ test.describe('Reported defects — builder, preview and workflow', () => {
     const confirm = page
       .getByRole('alertdialog')
       .or(page.getByRole('dialog'))
-      .getByRole('button', { name: /^(Delete|Move to trash|Confirm|Yes)/ });
+      .getByRole('button', { name: /^(Delete|Move to trash|Confirm|Yes)/i });
     if (await confirm.first().isVisible({ timeout: 3_000 }).catch(() => false)) await confirm.first().click();
 
     await expect(
@@ -269,10 +280,7 @@ test.describe('Reported defects — builder, preview and workflow', () => {
   test('BUG-08 missing recipient e-mail is reported as a blocking error', knownBug(KNOWN_BUGS.BUG08), async ({ preparePage, workflowPage }) => {
     await preparePage.goToWorkflow();
     await expect(workflowPage.heading).toBeVisible();
-    test.skip(
-      (await workflowPage.recipientEmail(1).inputValue()) !== '',
-      'Recipient 1 already has an e-mail; this check needs a recipient without one',
-    );
+    requireData((await workflowPage.recipientEmail(1).inputValue()) === '', 'recipient 1 of the latest draft already has an e-mail; this check needs a recipient without one');
 
     const check = workflowPage.recipientEmailCheck;
     await expect(check).toBeVisible();

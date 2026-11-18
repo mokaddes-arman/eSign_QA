@@ -31,7 +31,9 @@ test.describe('UI · Billing & plan', () => {
       .locator('[aria-pressed="true"], [aria-checked="true"], [aria-selected="true"]')
       .first();
     await expect(selected).toBeVisible();
-    await expect(selected, 'a Free workspace should see Free pre-selected').toContainText(/^\s*Free/);
+    const plan = await billingPage.planCode();
+    const name = plan.charAt(0).toUpperCase() + plan.slice(1);
+    await expect(selected, `the workspace is on ${name}; the dialog should pre-select ${name}`).toContainText(new RegExp(`^\\s*${name}`));
     await page.keyboard.press('Escape');
   });
 });

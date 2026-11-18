@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { waitForHydration } from '../helpers/wait';
+import { heal } from '../helpers/selfHeal';
 
 /**
  * Shared behaviour for every page object: navigation, waits,
@@ -10,8 +11,37 @@ export abstract class BasePage {
 
   constructor(public readonly page: Page) {}
 
+  /**
+   * Self-healing locator: the primary strategy, then fallbacks if the markup drifted.
+   * Fallback use is reported after each test (annotation "self-healed").
+   */
+  protected heal(name: string, primary: Locator, ...fallbacks: Locator[]): Locator {
+    return heal(this.page, name, primary, ...fallbacks);
+  }
+
+  /**
+   * A button found by role, healing to an exact visible-text or aria-label/title match.
+   * Fallbacks always match the WHOLE label, so they can only find the same control by
+   * another route — `.or()` unions in DOM order, and a loose substring fallback could
+   * otherwise pick an earlier, different button. `exact` applies to the primary only.
+   */
+  protected healButton(label: string, exact = true): Locator {
+    const text = new RegExp(`^\\s*${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`);
+    return this.heal(
+      `button "${label}"`,
+      this.page.getByRole('button', { name: label, exact }),
+      this.page.locator('button, [role="button"]').filter({ hasText: text }),
+      this.page.locator(`[aria-label="${label}"], [title="${label}"]`),
+    );
+  }
+
   async goto(): Promise<void> {
-    await this.page.goto(this.path, { waitUntil: 'domcontentloaded' });
+    /* A slow live site can time out a navigation; try once more before failing. */
+    await this.page.goto(this.path, { waitUntil: 'domcontentloaded' }).catch(async (error: Error) => {
+      if (!/Timeout|net::ERR_/.test(error.message)) throw error;
+      console.warn(`[navigation] ${this.path}: ${error.message.split('\n')[0]} — retrying once`);
+      await this.page.goto(this.path, { waitUntil: 'domcontentloaded' });
+    });
     await this.settle();
     this.assertSessionNotSuperseded();
     await this.recoverFromApiOutage();

@@ -61,7 +61,7 @@ test.describe('UI · Envelope builder', () => {
     });
 
     test('inspector controls are labelled once a field is selected', async ({ preparePage, page }) => {
-      test.skip((await preparePage.placedFields.count()) === 0, 'Draft has no placed fields');
+      await preparePage.requirePlacedFields();
       await preparePage.selectField('last'); // fields overlap; the last one is on top
       for (const control of [preparePage.labelInput, preparePage.placeholderInput, preparePage.assignedRecipientSelect]) {
         await expect(control).toBeVisible();
@@ -70,7 +70,7 @@ test.describe('UI · Envelope builder', () => {
     });
 
     test('field labels are readable on a white page', async ({ preparePage }) => {
-      test.skip((await preparePage.placedFields.count()) === 0, 'Draft has no placed fields');
+      await preparePage.requirePlacedFields();
       await expectTextReadableOn(preparePage.placedFields.first().locator('span').first(), WHITE, 3, 'field label');
     });
 

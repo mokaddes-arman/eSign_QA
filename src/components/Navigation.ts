@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import { clickUntilVisible } from '../helpers/wait';
 
 /** Slide-out main navigation available on every authenticated page. */
 export class Navigation {
@@ -25,8 +26,9 @@ export class Navigation {
   }
 
   async open(): Promise<void> {
+    /* On narrow screens the drawer opens from a button; retry if the first click lands before hydration (R3). */
     if (!(await this.nav.isVisible().catch(() => false))) {
-      await this.openButton.click();
+      await clickUntilVisible(this.openButton, this.nav, { what: "The navigation drawer did not open" });
     }
     await expect(this.nav).toBeVisible();
   }

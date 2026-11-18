@@ -16,6 +16,7 @@ import { BillingPage } from '../pages/BillingPage';
 import { SignerPreviewPage } from '../pages/SignerPreviewPage';
 import { Navigation } from '../components/Navigation';
 import { createLogger } from '../helpers/logger';
+import { explainFailure, reportHealing } from '../helpers/selfHeal';
 
 type UiFixtures = {
   homePage: HomePage;
@@ -35,6 +36,8 @@ type UiFixtures = {
   signerPreviewPage: SignerPreviewPage;
   navigation: Navigation;
   logStep: (message: string) => Promise<void>;
+  /** Auto fixture: self-healing report + plain-language failure summary. */
+  qaDiagnostics: void;
 };
 
 export const test = base.extend<UiFixtures>({
@@ -61,6 +64,19 @@ export const test = base.extend<UiFixtures>({
       await testInfo.attach('step', { body: message, contentType: 'text/plain' });
     });
   },
+  qaDiagnostics: [
+    async ({ page }, use, testInfo) => {
+      await use();
+      await reportHealing(page, testInfo);
+      const failed = testInfo.status !== testInfo.expectedStatus && testInfo.status !== 'skipped';
+      if (failed && testInfo.error?.message) {
+        const summary = await explainFailure(page, testInfo.error.message);
+        testInfo.annotations.push({ type: 'failure-summary', description: summary });
+        await testInfo.attach('failure-summary', { body: summary, contentType: 'text/plain' });
+      }
+    },
+    { auto: true },
+  ],
 });
 
 export { expect };

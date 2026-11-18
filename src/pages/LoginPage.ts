@@ -7,7 +7,7 @@ export class LoginPage extends BasePage {
   readonly heading = this.page.getByRole('heading', { name: /sign in|welcome back/i }).first();
   readonly emailInput = this.page.getByRole('textbox', { name: /email/i });
   readonly passwordInput = this.page.getByRole('textbox', { name: /password/i });
-  readonly signInButton = this.page.getByRole('button', { name: 'Continue', exact: true });
+  readonly signInButton = this.healButton('Continue');
   readonly rememberDeviceSwitch = this.page.getByRole('switch', { name: 'Remember this device' });
   readonly forgotPasswordLink = this.page.getByRole('link', { name: /forgot password/i });
   readonly registerLink = this.page.getByRole('link', { name: /create an account|start free|sign up/i });

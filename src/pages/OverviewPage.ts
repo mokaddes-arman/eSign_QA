@@ -5,8 +5,8 @@ export class OverviewPage extends BasePage {
   protected readonly path = '/overview';
 
   readonly heading = this.page.getByRole('heading', { level: 1, name: 'Overview' });
-  readonly newEnvelopeButton = this.page.getByRole('button', { name: 'New envelope' });
-  readonly takeTourButton = this.page.getByRole('button', { name: 'Take the tour' });
+  readonly newEnvelopeButton = this.healButton('New envelope', false);
+  readonly takeTourButton = this.healButton('Take the tour', false);
   readonly workspaceName = this.page.getByText('Global Softel').first();
   readonly planLine = this.page.getByText(/renews .* — .* needs your attention/);
 

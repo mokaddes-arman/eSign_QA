@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
+import { clickUntilVisible } from '../helpers/wait';
 
 export type TicketCategory =
   | 'Signing issue'
@@ -14,7 +15,7 @@ export class SupportPage extends BasePage {
 
   readonly heading = this.page.getByRole('heading', { level: 1, name: 'Support' });
   readonly openTicketsStat = this.page.getByText('Your open tickets');
-  readonly newTicketButton = this.page.getByRole('button', { name: 'New ticket' });
+  readonly newTicketButton = this.healButton('New ticket', false);
   readonly emptyState = this.page.getByText('You have no support tickets yet.');
   readonly table = this.page.getByRole('table');
   readonly statusFilter = this.page.getByLabel('Filter by status');
@@ -35,8 +36,7 @@ export class SupportPage extends BasePage {
   }
 
   async openNewTicket(): Promise<void> {
-    await this.newTicketButton.click();
-    await expect(this.dialog).toBeVisible();
+    await clickUntilVisible(this.newTicketButton, this.dialog, { what: "The New ticket dialog did not open" });
   }
 
   async fillTicket(input: {

@@ -73,17 +73,15 @@ test.describe('Authentication · registration form', () => {
   });
 });
 
+/* Runs every time (agreed 18 Nov 2026): each run registers a unique example.com address,
+   so no real inbox receives the verification e-mail, and stops at the OTP page. It leaves
+   one unverified workspace per run on the live site. */
 test.describe('Authentication · live signup', () => {
-  test.skip(
-    process.env.RUN_SIGNUP !== 'true',
-    'Set RUN_SIGNUP=true to create a real workspace (sends a verification e-mail).',
-  );
-
   test('creates a workspace and reaches the verification step', async ({
     registerPage,
     page,
   }) => {
-    const uniqueEmail = env.user.email.replace('@', `+${Date.now()}@`);
+    const uniqueEmail = `qa.signup+${Date.now()}@example.com`;
     await registerPage.goto();
     await registerPage.fillForm({
       name: env.user.name,
@@ -94,6 +92,7 @@ test.describe('Authentication · live signup', () => {
       companySize: env.user.companySize,
     });
     await registerPage.submit();
-    await expect(page).toHaveURL(/\/login\/verify/);
+    await expect(page, 'Registration did not reach the e-mail verification step').toHaveURL(/\/login\/verify/, { timeout: 30_000 });
+    await expect(page.getByText(uniqueEmail).or(page.getByText(/code|verify/i)).first(), 'The verification page should ask for the e-mailed code').toBeVisible();
   });
 });

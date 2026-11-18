@@ -3,6 +3,7 @@ import { test, expect } from '../../src/fixtures/test';
 import { KNOWN_BUGS, knownBug, expectBugsToFail } from '../../src/helpers/bugs';
 import { unlabeledControls } from '../../src/helpers/ui';
 import { uiBaseline } from '../../src/helpers/uiSuite';
+import { waitForHydration } from '../../src/helpers/wait';
 
 const h1 = (p: Page) => p.getByRole('heading', { level: 1 }).first();
 
@@ -40,8 +41,10 @@ test.describe('UI · Account & settings', () => {
 
   test('notification preferences expose switch state', async ({ page }) => {
     await page.goto('/account/notifications', { waitUntil: 'domcontentloaded' });
+    await waitForHydration(page);
     const switches = page.getByRole('switch');
-    await expect(switches.first()).toBeVisible();
+    /* The preferences are fetched client-side after hydration; allow for backend latency. */
+    await expect(switches.first()).toBeVisible({ timeout: 25_000 });
     expect(await switches.count()).toBeGreaterThanOrEqual(8);
   });
 
@@ -49,6 +52,12 @@ test.describe('UI · Account & settings', () => {
     test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
     await page.goto('/account/organization', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
+    /* The member count is rendered after the people list loads. Reading the headings
+       before that saw "People" and passed while the page showed "People1" (false pass,
+       found 18 Nov 2026) — wait for the data first. */
+    await waitForHydration(page, 15_000);
+    await expect(page.getByRole('heading', { name: /^People/ })).toBeVisible();
+    await expect(page.getByRole('table').or(page.getByRole('list')).first()).toBeVisible({ timeout: 20_000 });
     const names = await page.getByRole('heading').evaluateAll((els) => els.map((e) => (e.textContent || '').trim()));
     const glued = names.filter((n) => /[A-Za-z]\d+$/.test(n));
     expect(glued, `headings with a glued count: ${glued.join(', ')}`).toEqual([]);

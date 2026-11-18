@@ -6,12 +6,12 @@ export class WorkflowPage extends BasePage {
   protected path = '/documents';
 
   readonly heading = this.page.getByRole('heading', { level: 1, name: 'Workflow & routing' });
-  readonly sequentialButton = this.page.getByRole('button', { name: 'Sequential' });
-  readonly parallelButton = this.page.getByRole('button', { name: 'Parallel' });
-  readonly addRecipientButton = this.page.getByRole('button', { name: 'Add recipient' });
-  readonly sendEnvelopeButton = this.page.getByRole('button', { name: 'Send envelope' });
-  readonly backButton = this.page.getByRole('button', { name: 'Back' });
-  readonly saveButton = this.page.getByRole('button', { name: 'Save', exact: true });
+  readonly sequentialButton = this.healButton('Sequential', false);
+  readonly parallelButton = this.healButton('Parallel', false);
+  readonly addRecipientButton = this.healButton('Add recipient', false);
+  readonly sendEnvelopeButton = this.healButton('Send envelope', false);
+  readonly backButton = this.healButton('Back', false);
+  readonly saveButton = this.healButton('Save');
 
   readonly subjectInput = this.page.getByLabel('Subject');
   readonly messageInput = this.page.getByLabel(/^Message/);

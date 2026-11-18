@@ -1,4 +1,5 @@
 import { test, expect } from '../../src/fixtures/test';
+import { clickUntilVisible } from '../../src/helpers/wait';
 
 /**
  * Signer preview of the newest draft. Preview mode saves nothing and notifies
@@ -18,13 +19,24 @@ test.describe('Signer experience preview', () => {
     await expect(signerPreviewPage.previewNotice).toBeVisible();
     for (const control of [
       signerPreviewPage.startSigningButton,
-      signerPreviewPage.disclosureButton,
-      signerPreviewPage.declineButton,
-      signerPreviewPage.reassignButton,
       signerPreviewPage.finishButton,
       signerPreviewPage.downloadUnsignedButton,
     ]) {
       await expect(control).toBeVisible();
+    }
+    /* Below ~1440 px Disclosure / Decline / Reassign move into the "More actions" menu (responsive layout). */
+    const page = signerPreviewPage.page;
+    if (await signerPreviewPage.disclosureButton.isVisible().catch(() => false)) {
+      for (const control of [signerPreviewPage.disclosureButton, signerPreviewPage.declineButton, signerPreviewPage.reassignButton]) {
+        await expect(control).toBeVisible();
+      }
+    } else {
+      const menu = page.getByRole('menu');
+      await clickUntilVisible(page.getByRole('button', { name: 'More actions' }), menu);
+      for (const name of ['Disclosure', 'Decline', 'Reassign']) {
+        await expect(menu.getByRole('menuitem', { name })).toBeVisible();
+      }
+      await page.keyboard.press('Escape');
     }
     await expect(
       signerPreviewPage.page.getByRole('progressbar', { name: 'Required fields completed' }),

@@ -1,5 +1,7 @@
 # Dependencies
 node_modules/
+__pycache__/
+*.py[cod]
 
 # Secrets — real credentials live only in .env (template: .env.example)
 .env
@@ -16,6 +18,7 @@ test-results*/
 playwright-report/
 blob-report/
 dashboard-report/
+reports-archive/
 playwright/.cache/
 
 # Tooling / scratch

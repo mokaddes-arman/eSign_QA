@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
+import { clickUntilVisible } from '../helpers/wait';
 
 export type ContactGroup = 'Customers' | 'Internal' | 'Counsel' | 'Vendors';
 export type RecipientRole = 'Needs to sign' | 'Approver' | 'Receives a copy' | 'In-person signer';
@@ -18,7 +19,7 @@ export class ContactsPage extends BasePage {
 
   readonly heading = this.page.getByRole('heading', { level: 1, name: 'Contacts' });
   readonly addressBookHeading = this.page.getByRole('heading', { name: /Address book/ });
-  readonly newContactButton = this.page.getByRole('button', { name: 'New contact' });
+  readonly newContactButton = this.healButton('New contact', false);
   readonly emptyState = this.page.getByText('No contacts yet');
   readonly table = this.page.getByRole('table');
 
@@ -38,8 +39,7 @@ export class ContactsPage extends BasePage {
   }
 
   async openNewContact(): Promise<void> {
-    await this.newContactButton.click();
-    await expect(this.dialog).toBeVisible();
+    await clickUntilVisible(this.newContactButton, this.dialog, { what: "The New contact dialog did not open" });
   }
 
   async createContact(contact: ContactInput): Promise<void> {

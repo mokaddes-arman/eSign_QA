@@ -6,7 +6,7 @@ export class DeveloperPage extends BasePage {
 
   readonly heading = this.page.getByRole('heading', { level: 1, name: 'Developer API & add-on' });
   readonly startBuilding = this.page.getByRole('heading', { name: 'Start building' });
-  readonly createKeyButton = this.page.getByRole('button', { name: 'Create key' });
+  readonly createKeyButton = this.healButton('Create key', false);
   readonly apiConsoleLink = this.page.getByRole('link', { name: 'API console' });
   readonly guidesLink = this.page.getByRole('link', { name: 'Guides & docs' });
   readonly activityLogsLink = this.page.getByRole('link', { name: 'Activity logs' });

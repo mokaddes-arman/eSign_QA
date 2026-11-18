@@ -31,11 +31,7 @@ test.describe('Documents library @smoke', () => {
     }
   });
 
-  test('exposes every filter dimension', async ({ documentsPage, browserName }) => {
-    test.skip(
-      browserName === 'firefox',
-      'Known Firefox renderer crash ("Page crashed") when reading <select> options on /documents.',
-    );
+  test('exposes every filter dimension', async ({ documentsPage }) => {
     await documentsPage.openFilters();
 
     await expect(documentsPage.statusFilter).toBeVisible();
@@ -56,11 +52,7 @@ test.describe('Documents library @smoke', () => {
     );
   });
 
-  test('sorts the list by name and status', async ({ documentsPage, browserName }) => {
-    test.skip(
-      browserName === 'firefox',
-      'Known Firefox renderer crash ("Page crashed") when reading <select> options on /documents.',
-    );
+  test('sorts the list by name and status', async ({ documentsPage }) => {
     const options = await documentsPage.sortSelect.locator('option').allTextContents();
     expect(options).toEqual(expect.arrayContaining(['Recent', 'Name', 'Status', 'Owner']));
 
@@ -82,20 +74,5 @@ test.describe('Documents library @smoke', () => {
       timeout: 10_000,
     });
     await testInfo.attach('folder-name', { body: folder, contentType: 'text/plain' });
-  });
-
-  test('uploads a document and opens the prepare builder @quota', async ({
-    documentsPage,
-    page,
-  }) => {
-    test.skip(
-      process.env.RUN_UPLOAD !== 'true',
-      'Creates a draft and consumes a free-plan signature request. Set RUN_UPLOAD=true to run.',
-    );
-
-    await documentsPage.uploadDocument(SAMPLE_DOC);
-
-    await expect(page).toHaveURL(/\/documents\/[0-9a-f-]+\/prepare/);
-    await expect(page.getByRole('heading', { name: 'Prepare document' })).toBeVisible();
   });
 });

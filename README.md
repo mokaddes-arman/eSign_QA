@@ -104,10 +104,9 @@ All secrets live in **`.env`** (git-ignored). `.env.example` is the safe templat
 | `AUTH_STATE_PATH` | Session file, default `auth/storageState.json`. |
 | `OTP_CODE` | One-off 6-digit code to bypass mailbox polling. |
 | `GMAIL_IMAP_HOST/PORT`, `GMAIL_USER`, `GMAIL_APP_PASSWORD` | Optional Gmail IMAP retrieval (Google **App Password**, not the account password). |
-| `RUN_SIGNUP` | `true` runs the real signup test (creates a *new* workspace and sends a new verification e-mail). |
-| `RUN_UPLOAD` | `true` runs tests that create a new draft (consumes a free-plan signature request). |
-| `RUN_PAYMENT`, `CARD_*` | `true` runs sandbox payment cases with the Stripe **test** card. |
-| `RUN_LOGIN_FLOW` | `true` runs UF-05 (real sign-in). The account allows **one active session**, so run it alone. |
+| `CARD_*` | Stripe **test** card for the payment cases (`tests/billing/payments.spec.ts`). The tests refuse to type a card unless the checkout says "Stripe test mode". |
+| `QA_REPORTS` | `off` stops the automatic archive + `qa-reports/` regeneration after a run. |
+| ~~`RUN_SIGNUP`, `RUN_UPLOAD`, `RUN_PAYMENT`, `RUN_LOGIN_FLOW`, `RUN_SIGNOUT`~~ | Removed 18 Nov 2026 — no case is skipped any more (see §5 "No skipped cases"). |
 | `KNOWN_BUGS` | `strict` (default): bug tests fail while the bug exists. `expect-fail`: wrapped in `test.fail()` (CI). |
 | `DASHBOARD_OPEN` | `auto` (default, local only) · `always` · `never`. |
 
@@ -140,6 +139,15 @@ every suite.
 
 ## 5. Test design conventions
 
+- **No skipped cases.** A case runs, or it fails with a clear reason. Missing workspace data
+  fails as "Precondition failed (test data): …" (checked through the API, so a broken locator
+  can never pass as "no data"). Stateful journeys run in the serial `chromium-account`
+  project after every other Chromium test, followed by the `session-restore` teardown.
+- **Fail only on expectations.** Page-object buttons self-heal (`BasePage.healButton`:
+  role → exact text → aria-label/title); each healing is annotated `self-healed`. Every
+  failure gets a plain-language `failure-summary` (missing element with the closest
+  matches on the page, expected vs got, test-data precondition, or environment).
+
 - **Role-first locators** (`getByRole` with accessible names) and scoped containers; exact
   matching where the copy is duplicated. The app renders some labels twice (e.g. developer
   section links, "New envelope" h1/h2), so page objects centralise the disambiguation.
@@ -149,7 +157,8 @@ every suite.
   (`QA Folder <timestamp>`, `QA Contact <timestamp>`).
 - **Quota-aware** — builder tests open the newest existing draft via
   *Continue your most recent draft* instead of uploading; uploads are `@quota` and gated by
-  `RUN_UPLOAD=true`. The Free plan allows 6 signature requests/month and drafts count.
+  quota-aware: with requests left they upload, verify and move the new draft to Trash; with none left
+  they assert the refusal (DOC-022). The Free plan allows 6 signature requests/month and drafts count.
 - **Outcome over presence** — use the control, then assert what the user sees elsewhere.
   Check wording and colour for errors (`expectErrorStyled`) and contrast for text on
   documents (`expectTextReadableOn`). Never write a known defect into an expectation:
@@ -237,8 +246,8 @@ totals and how many known bugs still reproduce.
 | `npx playwright test --project=chromium --workers=1` | Serial run for debugging. |
 | `npx playwright test tests/documents/prepare.spec.ts` | One module. |
 | `npx playwright test --headed --debug` | Inspector / headed debugging. |
-| `RUN_UPLOAD=true npx playwright test --grep @quota` | Enable quota-consuming cases. |
-| `RUN_SIGNUP=true npx playwright test tests/auth/signup.spec.ts` | Real signup (needs inbox access). |
+| `npm run test:all` | **Complete run in the safe order**: full Chromium suite, then the account journeys (payments, uploads, sign-in/out, performance) one at a time with automatic session restore, then cross-browser smoke. Reports regenerate after each step. |
+| `npm run test:account` | Only the serial account journeys (`chromium-account`) + session restore. Run after the other Chromium projects, never alongside them. |
 | `npm run typecheck` | `tsc --noEmit`. |
 | `npm run test:ui-checks` | Module UI specs (`tests/ui`). |
 | `npm run test:flows` | User-flow journeys (`tests/flows`). |
@@ -249,6 +258,20 @@ totals and how many known bugs still reproduce.
 | `npm run auth:refresh` | Headless re-login (trusted device, no OTP). |
 | `npm run report` | Open the HTML report. |
 | `npm run report:dashboard` | Open the test-health dashboard. |
+| `npm run report:archive -- <label>` | Copy the last run's `playwright-report/`, `test-results/` and `dashboard-report/` to `reports-archive/<run date>_<label>/` **before** the next run overwrites them. |
+| `npm run test:api` · `test:security` · `test:a11y` · `test:compat` | Category suites added 17 Nov 2026 (`@api`, `@security`, `@a11y`, `@compat`). |
+| `npm run test:perf` | Page-load and API budgets in the quiet serial project (never alongside the parallel suite). |
+| `npm run test:cross-browser` | `@smoke` on Firefox, WebKit and Pixel 7. |
+| `npm run qa:reports` | Rebuild `qa-reports/` by hand. Normally automatic: after every run `reporters/qa-reports-reporter.ts` archives the run to `reports-archive/<date>_auto/` and regenerates the workbooks and `QA_Summary.md` with the current date (`python -m pip install openpyxl` once). |
+
+### QA coverage reports (`qa-reports/`)
+
+| File | Content |
+|---|---|
+| `catalog.py` | Every unique required scenario (376) across the nine test categories, with an implementation verdict and a regex linking it to the tests that verify it. |
+| `triage.py` | Run list, investigation verdict for each failing test (application / automation / environment) and the bug register. |
+| `generate_reports.py` | Builds the workbooks from the archived dashboard data only — execution status is never typed by hand. |
+| `QA_Coverage_Matrix.xlsx`, `QA_Gap_Analysis.xlsx`, `QA_Execution_Summary.xlsx`, `QA_Bug_Report.xlsx`, `QA_Summary.md` | Deliverables; trace/screenshot/report references point into `reports-archive/`. |
 
 ## 9. Troubleshooting
 
@@ -257,7 +280,8 @@ totals and how many known bugs still reproduce.
 | Tests land on `/login` | Session expired → `npm run auth:refresh` (or `auth:save` if it exits 2). |
 | "Signed out on this device" / `reason=superseded` | The account signed in elsewhere (one active session). `npm run auth:refresh`, and don't run two suites at once. |
 | OTP prompt times out | Set `OTP_CODE`, or configure `GMAIL_USER` + `GMAIL_APP_PASSWORD`. |
-| Upload test skipped | Expected; set `RUN_UPLOAD=true` and ensure quota is available. |
+| "Precondition failed (test data): …" | The workspace lacks data a case needs (read from the API). Not a product defect — restore the data. |
+| `self-healed` annotation | A page-object locator matched only through a fallback; update its primary locator. |
 | Upload stops at the prepare landing | Free-plan quota exhausted (sidebar shows `x / 6`); delete drafts or wait for renewal. |
 | `getByRole` strict-mode violations | Duplicate labels exist; scope the locator (see page objects) or use `exact: true`. |
 | Click swallowed on first interaction | Navigation is client-rendered; rely on `settle()`/`goto()` in the POM, avoid raw `page.goto`. |
@@ -269,8 +293,9 @@ totals and how many known bugs still reproduce.
 
 - **Automated:** 105 fully + 37 partly automated cases across every module, 14 module UI
   specs (≈ 180 checks), 8 user-flow journeys and 14 known-bug reproductions.
-- **Gated by environment:** live signup (`RUN_SIGNUP`), file upload / golden-path send
-  (`RUN_UPLOAD` + quota), real recipient signing and payment charging (manual charters).
+- **No skipped cases (18 Nov 2026):** signup runs to the OTP page, uploads are quota-aware,
+  payments run in Stripe test mode, sign-in/sign-out run last with automatic session restore.
+- **Still manual / blocked:** real recipient signing (needs a mailbox), OTP e-mail flows.
 - **Not automated:** actual card charges, inbound e-mail deliverability, external IdP SSO,
   partner provisioning, load/penetration testing.
 - Full traceability (IDs → automated spec) is in [`docs/TEST_CASES.md`](docs/TEST_CASES.md);

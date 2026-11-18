@@ -1,4 +1,5 @@
 import { test, expect } from '../../src/fixtures/test';
+import { clickUntilVisible } from '../../src/helpers/wait';
 
 test.describe('Authenticated navigation', () => {
   test('exposes every module in the main navigation @smoke', async ({
@@ -63,17 +64,16 @@ test.describe('Authenticated navigation', () => {
 
   test('notifications bell opens a popover linking to the centre', async ({ page, overviewPage }) => {
     await overviewPage.goto();
-    await page.getByRole('button', { name: 'Notifications' }).first().click();
     const popover = page.getByRole('dialog', { name: 'Notifications' });
+    await clickUntilVisible(page.getByRole('button', { name: 'Notifications' }).first(), popover);
     await popover.getByRole('link', { name: 'See all notifications' }).click();
     await expect(page).toHaveURL(/\/notifications/);
   });
 
   test('product tour starts and can be skipped', async ({ page, overviewPage }) => {
     await overviewPage.goto();
-    await page.getByRole('button', { name: 'Take the tour' }).click();
     const tour = page.getByRole('dialog', { name: 'Product tour' });
-    await expect(tour.getByText(/Step 1 of \d+/)).toBeVisible();
+    await clickUntilVisible(page.getByRole('button', { name: 'Take the tour' }), tour.getByText(/Step 1 of \d+/));
     await tour.getByRole('button', { name: 'Skip tour' }).click();
     await expect(tour).toBeHidden();
   });

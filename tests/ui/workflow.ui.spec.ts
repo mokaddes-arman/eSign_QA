@@ -1,4 +1,5 @@
 import { test, expect } from '../../src/fixtures/test';
+import { requireData } from '../../src/helpers/precondition';
 import { expectErrorStyled, expectStandardUi, trackPageErrors } from '../../src/helpers/ui';
 
 /** Workflow & routing step UI on the newest draft. Nothing is saved or sent. */
@@ -19,7 +20,7 @@ test.describe('UI · Workflow step', () => {
   });
 
   test('empty recipient e-mail shows an inline error in the error colour', async ({ workflowPage }) => {
-    test.skip((await workflowPage.recipientEmail(1).inputValue()) !== '', 'Recipient 1 already has an e-mail');
+    requireData((await workflowPage.recipientEmail(1).inputValue()) === '', 'recipient 1 of the latest draft already has an e-mail; this check needs a recipient without one');
     await workflowPage.saveRecipientEmailButton(1).click();
     await expect(workflowPage.recipientFieldError).toBeVisible();
     await expect(workflowPage.recipientFieldError).toHaveText(/email/i);

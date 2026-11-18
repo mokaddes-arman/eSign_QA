@@ -18,7 +18,11 @@ export interface UiRoute {
 }
 
 async function open(page: Page, route: UiRoute): Promise<void> {
-  await page.goto(route.path, { waitUntil: 'domcontentloaded' });
+  await page.goto(route.path, { waitUntil: 'domcontentloaded' }).catch(async (error: Error) => {
+    /* A slow live site can time out a navigation; try once more before failing. */
+    if (!/Timeout|net::ERR_/.test(error.message)) throw error;
+    await page.goto(route.path, { waitUntil: 'domcontentloaded' });
+  });
   await waitForHydration(page);
   /* One reload if the backend timed out (see BasePage.recoverFromApiOutage). */
   if (await page.getByRole('alert').filter({ hasText: /reach the eSignPro API/ }).count()) {

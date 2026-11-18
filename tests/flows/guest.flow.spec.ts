@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { test, expect } from '../../src/fixtures/test';
+import { requireData, requireEnv } from '../../src/helpers/precondition';
 import { env } from '../../src/config/env';
 import { LoginPage } from '../../src/pages/LoginPage';
 
@@ -33,14 +34,13 @@ test.describe('Flow · Guest journeys', () => {
   });
 
   /* The account allows ONE active session: signing in here signs out the saved session
-     every other test uses. Opt-in, run on its own, and it saves the new session back. */
+     every other test uses. It therefore runs in the serial `chromium-account` project after
+     every other Chromium test, saves the new session back, and the session-restore
+     teardown re-validates it afterwards. */
   test('UF-05 guest deep link returns to the page after sign-in @flow', async ({ browser, baseURL }) => {
-    test.skip(
-      process.env.RUN_LOGIN_FLOW !== 'true',
-      'Signs in and supersedes the shared session. Run alone: RUN_LOGIN_FLOW=true npx playwright test tests/flows/guest.flow.spec.ts',
-    );
-    test.skip(!process.env.ESIGN_EMAIL || !process.env.ESIGN_PASSWORD, 'Needs ESIGN_EMAIL / ESIGN_PASSWORD');
-    test.skip(!fs.existsSync(env.authStatePath), 'Needs a saved session for the trusted-device cookie');
+    requireEnv('ESIGN_EMAIL', 'sign in');
+    requireEnv('ESIGN_PASSWORD', 'sign in');
+    requireData(fs.existsSync(env.authStatePath), 'no saved session file: its trusted-device cookie lets the login skip the e-mail OTP (run npm run auth:save)');
 
     /* Keep only the trusted-device cookies so the password login skips the e-mail OTP. */
     const saved = JSON.parse(fs.readFileSync(env.authStatePath, 'utf8'));
@@ -58,7 +58,7 @@ test.describe('Flow · Guest journeys', () => {
         await login.waitForReady();
         await login.login(env.user.email, env.user.password);
         await page.waitForURL((u) => !/\/login$/.test(u.pathname), { timeout: 30_000 });
-        test.skip(/\/login\/verify/.test(page.url()), 'Device not trusted: OTP required');
+        requireData(!/\/login\/verify/.test(page.url()), 'the login asked for an e-mailed OTP: the trusted-device cookie has expired (run npm run auth:save)');
         await expect(page).toHaveURL(/\/contacts/);
         await expect(page.getByRole('heading', { level: 1, name: 'Contacts' })).toBeVisible();
         /* Keep the suite usable: this login replaced the saved session. */

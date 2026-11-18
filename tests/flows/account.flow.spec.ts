@@ -20,8 +20,12 @@ test.describe('Flow · Account profile', () => {
     try {
       await test.step('Save enables only when the form is dirty', async () => {
         await expect(profilePage.saveButton).toBeDisabled();
-        await setValue(next);
-        await expect(profilePage.saveButton).toBeEnabled();
+        /* Typing before hydration is discarded (TEST_PLAN R3): retry until the form registers it as dirty. */
+        await expect(async () => {
+          if (!isSelect) await field.fill('');
+          await setValue(next);
+          await expect(profilePage.saveButton).toBeEnabled({ timeout: 3_000 });
+        }).toPass({ timeout: 20_000 });
       });
 
       await test.step('save and confirm', async () => {

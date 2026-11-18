@@ -1,4 +1,5 @@
 import { test, expect } from '../../src/fixtures/test';
+import { KNOWN_BUGS, expectBugsToFail, knownBug } from '../../src/helpers/bugs';
 
 test.describe('Reports & analytics @smoke', () => {
   test.beforeEach(async ({ reportsPage }) => {
@@ -37,6 +38,19 @@ test.describe('Reports & analytics @smoke', () => {
       'Custom report',
     ] as const) {
       await expect(reportsPage.sectionLink(section)).toBeVisible();
+    }
+  });
+
+  test('BUG-28 report section tabs still navigate after the period is changed', knownBug(KNOWN_BUGS.BUG28), async ({ reportsPage, page }) => {
+    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    await reportsPage.selectRange('Last 12 months');
+    /* One click per tab, generous wait: a working tab navigates in < 2 s. No retries here —
+       the defect is precisely that the click is ignored. */
+    for (const [section, param] of [['By template', 'templates'], ['By recipient', 'recipients']] as const) {
+      const tab = page.getByRole('main').getByRole('link', { name: section, exact: true });
+      await expect(tab).toHaveAttribute('href', new RegExp(`section=${param}&range=12m`));
+      await tab.click();
+      await expect(page, `Clicking the "${section}" tab after changing the period did not open it`).toHaveURL(new RegExp(`section=${param}`), { timeout: 15_000 });
     }
   });
 

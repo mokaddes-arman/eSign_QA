@@ -16,7 +16,7 @@ export class ReportsPage extends BasePage {
   readonly heading = this.page.getByRole('heading', { level: 1, name: 'Reports' });
   readonly analyticsHeading = this.page.getByRole('heading', { name: 'My Analytics' });
   readonly dateRangeSelect = this.page.getByLabel('Date range');
-  readonly exportButton = this.page.getByRole('button', { name: 'Export report' });
+  readonly exportButton = this.healButton('Export report', false);
   readonly metrics = this.page.getByText('Completion rate');
   readonly table = this.page.getByRole('table');
 
@@ -26,8 +26,14 @@ export class ReportsPage extends BasePage {
   }
 
   sectionLink(name: ReportSection) {
-    /* The section list is rendered twice (sidebar + in-page nav). */
-    return this.page.getByRole('link', { name, exact: true }).first();
+    /* The section list is rendered twice (sidebar + in-page tabs). Use the in-page tab —
+       the primary control; under load WebKit ignored clicks on the sidebar copy — and heal
+       to the sidebar link only if the tabs are missing. */
+    return this.heal(
+      `report section "${name}"`,
+      this.page.getByRole('main').getByRole('link', { name, exact: true }),
+      this.page.getByRole('complementary').getByRole('link', { name, exact: true }),
+    );
   }
 
   metricCard(label: string) {
@@ -37,9 +43,12 @@ export class ReportsPage extends BasePage {
   async openSection(name: ReportSection): Promise<void> {
     const before = this.page.url();
     const link = this.sectionLink(name);
-    await link.click();
+    await expect(async () => {
+      if (this.page.url() === before) await link.click();
+      await expect(this.page).not.toHaveURL(before, { timeout: 15_000 });
+    }, `Opening the "${name}" report section did not change the page`).toPass({ timeout: 50_000 });
     try {
-      await expect(this.page).not.toHaveURL(before, { timeout: 5_000 });
+      await expect(this.page).not.toHaveURL(before, { timeout: 1_000 });
     } catch {
       /* Click can land before hydration attaches the client router. */
       await this.settle();
@@ -58,9 +67,12 @@ export class ReportsPage extends BasePage {
     const value = RANGE_VALUES[label];
     const committed = new RegExp(`[?&]range=${value}(?:&|$)`);
 
-    await this.dateRangeSelect.selectOption({ label });
-    try {
+    await expect(async () => {
+      await this.dateRangeSelect.selectOption({ label });
       await expect(this.page).toHaveURL(committed, { timeout: 15_000 });
+    }, `The reporting period did not switch to "${label}"`).toPass({ timeout: 50_000 });
+    try {
+      await expect(this.page).toHaveURL(committed, { timeout: 1_000 });
     } catch {
       /* The change can land before the client listener is attached; retry once. */
       await this.dateRangeSelect.selectOption({ label });

@@ -360,6 +360,28 @@ UI assertions.
 | UI-013 | Account | `tests/ui/account.ui.spec.ts` | 9 routes | Save disabled when clean; one colour mode; password dialog labels; switches; BUG-12 |
 | UI-014 | Billing | `tests/ui/billing.ui.spec.ts` | `/account/billing` | Summary not blank (O1); seat cost preview; BUG-14 |
 
+## 17. Coverage-gap cases added 17 Nov 2026 (API, integration, security, performance, a11y, compatibility)
+
+Added after the QA coverage analysis (`qa-reports/`). All are read-only against production
+unless stated. The full scenario list with execution status is in
+`qa-reports/QA_Coverage_Matrix.xlsx`; the catalogue that drives it is `qa-reports/catalog.py`.
+
+| ID | Category | Spec | What it proves |
+|----|----------|------|----------------|
+| API-001…010 | Integration / API | `tests/api/api-contract.spec.ts` | `/api/proxy/*` contracts: types, tenant isolation, 404/4xx (no 5xx, no stack traces), quota arithmetic, content types, TRACE refused |
+| INT-001…006 | Integration | `tests/integration/data-consistency.spec.ts` | UI figures equal API figures: library count/titles, contact & group counts, plan-usage %, developer meter, profile |
+| SEC-001…016 | Security | `tests/security/security.spec.ts` | HTTPS redirect, security headers, server-version disclosure, cookie flags, anonymous API denial, guest deep links, IDOR, no secrets in payloads, reflected XSS, open redirect, account enumeration (login + reset), password autocomplete, SQL meta-characters |
+| SESS-001…003 | Security | `tests/security/session.spec.ts` | Session loss → login with `next` (NF-008), forged cookie rejected, sign-out revokes the session server-side (AUTH-019, **opt-in `RUN_SIGNOUT=true`, run alone, then `npm run auth:refresh`**) |
+| PERF-001…005 | Performance | `tests/performance/performance.spec.ts` | Page-load budgets (TTFB ≤ 1.5 s, DCL ≤ 3 s, load ≤ 5 s), API p95 ≤ 1.5 s, 10-request concurrency smoke, recovery after burst (NF-012). Not a load test |
+| A11Y-001…008 | Accessibility | `tests/a11y/accessibility.spec.ts` | axe-core WCAG 2.1 A/AA on 14 pages (critical/serious fail), Tab order, visible focus, `lang` + autocomplete, 320 px reflow, modal focus trap and focus return |
+| COMP-001…003 | Compatibility | `tests/compatibility/viewports.spec.ts` | 360 / 768 / 1024 / 1920 px layouts and navigation (complements the firefox / webkit / mobile-chrome projects) |
+| AUTH-025…032 | Functional (negative/boundary) | `tests/auth/auth-validation.spec.ts` | Malformed e-mail, password 11 vs 12 chars, missing character classes, weak password, whitespace name, over-long e-mail. **All non-GET requests are aborted** so a validation gap can never create a workspace |
+| DOC-002/004/006/015/023 | Functional | `tests/documents/library-search.spec.ts` | Search by title / ENV id, empty state + clear, status filter, Drafts/Completed views, Recent and Name sort — each compared with the documents API |
+| CON-009, CON-010 | Functional | `tests/contacts/contacts-search.spec.ts` | List search by name / e-mail / no match; group chips filter rows and counts match |
+| SUP-006, SUP-009 | Functional | `tests/support/support-search.spec.ts` | Ticket search empty state, filter combination and reset, exclusive status chips |
+
+Tags: `@api`, `@security`, `@perf`, `@a11y`, `@compat` (e.g. `npx playwright test --grep @security`).
+
 ---
 
 ## Feature → test-case traceability

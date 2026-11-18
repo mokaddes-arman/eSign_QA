@@ -26,7 +26,7 @@ test.describe('UI · Reports', () => {
   test('recipient rows never show an empty recipient name', async ({ page }) => {
     await page.goto('/reports?section=recipients', { waitUntil: 'domcontentloaded' });
     const table = page.getByRole('table').first();
-    test.skip(!(await table.isVisible({ timeout: 15_000 }).catch(() => false)), 'No recipient table for this period');
+    await expect(table, 'The recipient report table did not render (the workspace has recipients)').toBeVisible({ timeout: 15_000 });
     const rows = table.locator('tbody tr');
     for (let i = 0; i < (await rows.count()); i++) {
       const first = (await rows.nth(i).locator('td, th').first().innerText()).trim();

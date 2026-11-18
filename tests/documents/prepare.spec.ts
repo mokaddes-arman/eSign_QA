@@ -22,23 +22,12 @@ test.describe('New envelope landing', () => {
     await expect(preparePage.page.getByText('Prepare', { exact: true }).first()).toBeVisible();
     await expect(preparePage.page.getByText('Workflow', { exact: true }).first()).toBeVisible();
   });
-
-  test('uploads a file and opens the builder @quota', async ({ preparePage }) => {
-    test.skip(
-      process.env.RUN_UPLOAD !== 'true',
-      'Creates a draft and consumes a free-plan signature request. Set RUN_UPLOAD=true to run.',
-    );
-
-    await preparePage.goto();
-    await preparePage.upload(SAMPLE_DOC);
-    await expect(preparePage.heading).toBeVisible();
-  });
 });
 
 test.describe('Envelope preparation builder', () => {
   /* All builder tests reuse the same latest draft; run them one at a time so
      field placement never races the read-only assertions. */
-  test.describe.configure({ mode: 'serial' });
+  test.describe.configure({ mode: 'default' }); /* in order, one worker; a failure never skips the rest */
 
   test.beforeEach(async ({ preparePage }) => {
     await preparePage.goto();

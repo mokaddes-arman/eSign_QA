@@ -1,20 +1,24 @@
 import { test, expect } from '../../src/fixtures/test';
+import { API } from '../../src/helpers/api';
+import { requireData } from '../../src/helpers/precondition';
 
 /** UF-14 / UF-16 — find a draft in the library, open it in the builder and return. */
 test.describe('Flow · Documents library', () => {
-  test('UF-16 sender finds a draft, opens it and returns to the library @flow', async ({ documentsPage, preparePage, page }) => {
+  test('UF-16 sender finds a draft, opens it and returns to the library @flow', async ({ documentsPage, preparePage, page, request }) => {
+    const drafts = ((await (await request.get(API.documents)).json()) as { status: string }[]).filter((d) => ['draft', 'prepared'].includes(d.status));
+    requireData(drafts.length > 0, 'the workspace has no drafts (API)');
     let title = '';
 
     await test.step('open the Drafts view', async () => {
       await documentsPage.goto();
       await documentsPage.openFolder('Drafts');
       await expect(page).toHaveURL(/folder=drafts|view=drafts/);
-      test.skip((await page.getByRole('button', { name: 'More actions' }).count()) === 0, 'No drafts in the workspace');
+      await expect(documentsPage.rows.first(), `The API lists ${drafts.length} draft(s) but the Drafts view shows no rows`).toBeVisible({ timeout: 15_000 });
     });
 
     await test.step('search narrows the list to the draft', async () => {
       title = ((await documentsPage.rowTitle(documentsPage.rows.first()).innerText()) || '').trim();
-      test.skip(!title, 'Could not read a draft title');
+      expect(title, 'The first draft row has no readable title').not.toBe('');
       await documentsPage.searchInput.fill(title.slice(0, 10));
       await page.keyboard.press('Enter');
       /* The search is debounced and committed to ?q=; the list re-renders after that. */

@@ -1,5 +1,8 @@
 import { test, expect } from '../../src/fixtures/test';
+import { API } from '../../src/helpers/api';
+import { requireData } from '../../src/helpers/precondition';
 import { uiBaseline } from '../../src/helpers/uiSuite';
+import { clickUntilVisible } from '../../src/helpers/wait';
 
 test.describe('UI · Documents library', () => {
   uiBaseline([
@@ -11,19 +14,23 @@ test.describe('UI · Documents library', () => {
 
   test('a search with no matches shows a friendly empty state', async ({ documentsPage, page }) => {
     await documentsPage.goto();
-    await documentsPage.searchInput.fill(`zz-no-match-${Date.now()}`);
-    await page.keyboard.press('Enter');
+    /* Text typed before hydration is discarded (R3): retry until the query is committed to the URL. */
+    await expect(async () => {
+      await documentsPage.searchInput.fill(`zz-no-match-${Date.now()}`);
+      await page.keyboard.press('Enter');
+      await expect(page).toHaveURL(/[?&]q=zz-no-match/, { timeout: 3_000 });
+    }).toPass({ timeout: 20_000 });
     await expect(page.getByText(/no (documents|results|matches)|nothing (found|in)|Showing 0/i).first()).toBeVisible({
       timeout: 10_000,
     });
   });
 
-  test('row actions menu returns focus to its trigger on Escape', async ({ documentsPage, page }) => {
+  test('row actions menu returns focus to its trigger on Escape', async ({ documentsPage, page, request }) => {
+    requireData((await (await request.get(API.documents)).json()).length > 0, 'the workspace has no documents (API)');
     await documentsPage.goto();
     const trigger = page.getByRole('button', { name: 'More actions' }).first();
-    test.skip((await trigger.count()) === 0, 'No documents in the workspace');
-    await trigger.click();
-    await expect(page.getByRole('menu').first()).toBeVisible();
+    await expect(trigger, 'Documents exist but no row "More actions" button was found').toBeVisible();
+    await clickUntilVisible(trigger, page.getByRole('menu').first());
     await page.keyboard.press('Escape');
     await expect(page.getByRole('menu')).toHaveCount(0);
     await expect(trigger).toBeFocused();
@@ -31,9 +38,8 @@ test.describe('UI · Documents library', () => {
 
   test('new-folder dialog is labelled and cancellable', async ({ documentsPage, page }) => {
     await documentsPage.goto();
-    await documentsPage.newFolderButton.click();
     const dialog = page.getByRole('dialog');
-    await expect(dialog.getByRole('textbox', { name: 'Folder name' })).toBeVisible();
+    await clickUntilVisible(documentsPage.newFolderButton, dialog.getByRole('textbox', { name: 'Folder name' }));
     await page.keyboard.press('Escape');
     await expect(dialog).toBeHidden();
   });

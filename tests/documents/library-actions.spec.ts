@@ -1,4 +1,6 @@
 import { test, expect } from '../../src/fixtures/test';
+import { API } from '../../src/helpers/api';
+import { requireData } from '../../src/helpers/precondition';
 
 /* Read-only checks of library controls: menus are opened and dismissed, nothing is chosen. */
 test.describe('Documents library actions', () => {
@@ -6,8 +8,9 @@ test.describe('Documents library actions', () => {
     await documentsPage.goto();
   });
 
-  test('row actions menu lists every lifecycle action', async ({ documentsPage, page }) => {
-    test.skip((await page.getByRole('button', { name: 'More actions' }).count()) === 0, 'No documents in workspace');
+  test('row actions menu lists every lifecycle action', async ({ documentsPage, page, request }) => {
+    requireData((await (await request.get(API.documents)).json()).length > 0, 'the workspace has no documents (API)');
+    await expect(page.getByRole('button', { name: 'More actions' }).first(), 'Documents exist but no row "More actions" button was found').toBeVisible();
 
     await page.getByRole('button', { name: 'More actions' }).first().click();
     const menu = page.getByRole('menu', { name: /^Actions for / });

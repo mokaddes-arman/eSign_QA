@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
+import { requireData } from '../helpers/precondition';
 
 /** /documents/{id}/prepare — field placement builder. */
 export class PreparePage extends BasePage {
@@ -7,13 +8,13 @@ export class PreparePage extends BasePage {
 
   readonly heading = this.page.getByRole('heading', { level: 1, name: 'Prepare document' });
   readonly fileInput = this.page.locator('input[type=file]').first();
-  readonly sendForSignatureButton = this.page.getByRole('button', { name: 'Send for signature' });
-  readonly continueButton = this.page.getByRole('button', { name: 'Continue', exact: true });
-  readonly workflowButton = this.page.getByRole('button', { name: 'Workflow', exact: true });
+  readonly sendForSignatureButton = this.healButton('Send for signature', false);
+  readonly continueButton = this.healButton('Continue');
+  readonly workflowButton = this.healButton('Workflow');
   readonly previewLink = this.page.getByRole('link', { name: 'Preview' });
-  readonly downloadPdfButton = this.page.getByRole('button', { name: 'Download PDF' });
-  readonly saveAsTemplateButton = this.page.getByRole('button', { name: 'Save as template' });
-  readonly saveAndCloseButton = this.page.getByRole('button', { name: 'Save and close' });
+  readonly downloadPdfButton = this.healButton('Download PDF', false);
+  readonly saveAsTemplateButton = this.healButton('Save as template', false);
+  readonly saveAndCloseButton = this.healButton('Save and close', false);
 
   readonly recipientsRegion = this.page.getByRole('region', { name: 'Recipients' });
   readonly addRecipientButton = this.recipientsRegion.getByRole('button', { name: 'Add recipient' });
@@ -22,7 +23,7 @@ export class PreparePage extends BasePage {
   readonly fieldPalette = this.page.getByRole('region', { name: 'Field palette' });
   readonly fieldSearch = this.fieldPalette.getByRole('searchbox', { name: 'Search fields' });
   readonly pagesRegion = this.page.getByRole('region', { name: 'Pages' });
-  readonly inspector = this.page.getByRole('button', { name: 'Hide Inspector' });
+  readonly inspector = this.healButton('Hide Inspector', false);
 
   /* Header */
   readonly fieldCounter = this.page.getByText(/^\d+ fields? · autosaved$/);
@@ -79,6 +80,22 @@ export class PreparePage extends BasePage {
   async fieldCount(): Promise<number> {
     await expect(this.fieldCounter).toBeVisible({ timeout: 15_000 });
     return Number((await this.fieldCounter.innerText()).match(/^\d+/)![0]);
+  }
+
+  /**
+   * Precondition for tests that need placed fields. The builder's own counter
+   * ("N fields · autosaved") decides whether the draft has fields — so a broken
+   * canvas locator FAILS the test instead of looking like "no data" and skipping.
+   */
+  async requirePlacedFields(): Promise<number> {
+    await this.waitForCanvas();
+    const n = await this.fieldCount();
+    requireData(n > 0, 'the latest draft has no placed fields (builder counter shows 0 fields)');
+    await expect(
+      this.placedFields.first(),
+      `The builder reports ${n} placed field(s) but none was found on the canvas (field locator out of date?)`,
+    ).toBeVisible({ timeout: 15_000 });
+    return n;
   }
 
   async waitForCanvas(): Promise<void> {

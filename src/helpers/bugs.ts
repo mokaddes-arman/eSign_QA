@@ -153,6 +153,56 @@ export const KNOWN_BUGS = {
     expected: 'Create endpoint stays disabled until a valid https URL is entered',
     caseId: 'DEV-014',
   },
+  /* Found by the coverage-gap tests on 17 Nov 2026 (qa-reports/QA_Bug_Report.xlsx). */
+  BUG19: {
+    id: 'BUG-19',
+    severity: 'S4',
+    summary: 'Label in Name (WCAG 2.5.3): logo link, global-search button and account avatar have accessible names that omit their visible text',
+    expected: 'Each control’s accessible name contains its visible text (e.g. search name includes the visible label; avatar name includes "MS")',
+    caseId: 'A11Y-001',
+  },
+  BUG20: {
+    id: 'BUG-20',
+    severity: 'S3',
+    summary: 'Reflow (WCAG 1.4.10): sign-in and app shell are 360 px wide, so a 320 px viewport scrolls horizontally',
+    expected: 'Content reflows to 320 CSS px without horizontal scrolling',
+    caseId: 'A11Y-006',
+  },
+  BUG21: {
+    id: 'BUG-21',
+    severity: 'S4',
+    summary: 'Password meter labels passwords that break the stated rule (11 chars, or no digit/capital/symbol) as "Strong" instead of keeping the "Use 12+ characters…" guidance',
+    expected: 'A password that does not meet the rule is never labelled Strong; the meter keeps showing what is missing until "Excellent — meets…"',
+    caseId: 'AUTH-026',
+  },
+  BUG22: {
+    id: 'BUG-22',
+    severity: 'S4',
+    summary: 'Server software and version disclosed in response headers (Server: nginx/1.24.0 (Ubuntu), X-Powered-By: Next.js)',
+    expected: 'No version in the Server header and no X-Powered-By header',
+    caseId: 'SEC-003',
+  },
+  BUG23: {
+    id: 'BUG-23',
+    severity: 'S3',
+    summary: 'Documents status filter "Drafts" returns 0 documents while the "Drafts" view lists every prepared draft (6)',
+    expected: 'Filter by status = Drafts lists the same envelopes as the Drafts view',
+    caseId: 'DOC-004',
+  },
+  BUG24: {
+    id: 'BUG-24',
+    severity: 'S3',
+    summary: 'Slow first visit: static JS chunks served from the origin with ~1–1.8 s time-to-first-byte each (no CDN); cold page loads take 6–15 s',
+    expected: 'Cold page load within budget (TTFB ≤ 1.5 s, DOMContentLoaded ≤ 3 s, load ≤ 5 s); immutable assets served from a CDN/edge cache',
+    caseId: 'PERF-001',
+  },
+  BUG28: {
+    id: 'BUG-28',
+    severity: 'S3',
+    summary: 'WebKit/Safari: after changing the report period, clicking a report section tab does nothing (hrefs are correct; Chromium navigates)',
+    expected: 'Report section tabs navigate in every browser, also after the period changed',
+    caseId: 'REP-002',
+  },
 } as const satisfies Record<string, KnownBug>;
 
 /** Fixed template name used by the uniqueness check, so runs never pile up templates. */

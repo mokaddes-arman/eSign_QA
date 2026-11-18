@@ -19,7 +19,7 @@ export class RegisterPage extends BasePage {
   readonly companyInput = this.page.getByRole('textbox', { name: 'Company' });
   readonly emailInput = this.page.getByRole('textbox', { name: 'Work email' });
   readonly passwordInput = this.page.getByRole('textbox', { name: 'Password' });
-  readonly showPasswordButton = this.page.getByRole('button', { name: 'Show password' });
+  readonly showPasswordButton = this.healButton('Show password', false);
   readonly passwordHint = this.page.getByText(
     /Use 12\+ characters|^Weak$|^Medium$|^Strong$|^Excellent$/i,
   );
@@ -27,7 +27,7 @@ export class RegisterPage extends BasePage {
   readonly companyTypeSelect = this.page.getByRole('combobox', { name: 'Company type' });
   readonly companySizeSelect = this.page.getByRole('combobox', { name: 'Company size' });
   readonly termsCheckbox = this.page.getByRole('checkbox', { name: /I agree to the Terms of Service/ });
-  readonly createAccountButton = this.page.getByRole('button', { name: 'Create account' });
+  readonly createAccountButton = this.healButton('Create account', false);
   readonly signInTab = this.page.getByRole('tab', { name: 'Sign in' });
   readonly createAccountTab = this.page.getByRole('tab', { name: 'Create account' });
 

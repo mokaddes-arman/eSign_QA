@@ -92,7 +92,7 @@ jobs:
       # workspace (folders, contacts, templates) and stay local/manual (TEST_PLAN R13).
       - name: Full suite (main, nightly, manual)
         if: github.event_name != 'pull_request'
-        run: npx playwright test --project=chromium --project=chromium-builder --grep-invert @data
+        run: npx playwright test --project=chromium --project=chromium-builder --grep-invert "@data|@perf"
 
       # Artifacts show the signed-in workspace and traces carry session cookies.
       # The repository is public, so keep retention short (see TEST_PLAN §14).

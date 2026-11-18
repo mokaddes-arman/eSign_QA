@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
+import { clickUntilVisible } from '../helpers/wait';
 
 export type DocumentView =
   | 'All documents'
@@ -21,10 +22,10 @@ export class DocumentsPage extends BasePage {
   readonly heading = this.page.getByRole('heading', { level: 1, name: 'Documents' });
   readonly searchInput = this.page.getByRole('searchbox', { name: /search documents/i });
   readonly sortSelect = this.page.getByLabel('Sort');
-  readonly filtersButton = this.page.getByRole('button', { name: 'Filters' });
-  readonly newFolderButton = this.page.getByRole('button', { name: 'New folder' });
-  readonly uploadPrepareButton = this.page.getByRole('button', { name: 'Upload & prepare' });
-  readonly uploadFileButton = this.page.getByRole('button', { name: 'Upload a file' });
+  readonly filtersButton = this.healButton('Filters', false);
+  readonly newFolderButton = this.healButton('New folder', false);
+  readonly uploadPrepareButton = this.healButton('Upload & prepare', false);
+  readonly uploadFileButton = this.healButton('Upload a file', false);
   readonly fileInput = this.page.locator('input[type=file]').first();
 
   readonly statusFilter = this.page.getByLabel('Filter by status');
@@ -49,13 +50,18 @@ export class DocumentsPage extends BasePage {
   }
 
   async openFolder(name: DocumentView): Promise<void> {
-    await this.folderLink(name).click();
+    const before = this.page.url();
+    /* A click before hydration is dropped (R3): retry until the view changes the URL. Each attempt
+       waits 15 s — re-clicking sooner aborts the server-component transition in flight. */
+    await expect(async () => {
+      if (this.page.url() === before) await this.folderLink(name).click();
+      await expect(this.page).not.toHaveURL(before, { timeout: 15_000 });
+    }, `Opening the "${name}" view did not change the page`).toPass({ timeout: 50_000 });
     await this.page.waitForLoadState('domcontentloaded');
   }
 
   async openFilters(): Promise<void> {
-    await this.filtersButton.click();
-    await expect(this.statusFilter).toBeVisible();
+    await clickUntilVisible(this.filtersButton, this.statusFilter, { what: "The Filters panel (status / type / time / owner) did not open" });
   }
 
   /**
@@ -97,6 +103,31 @@ export class DocumentsPage extends BasePage {
     });
   }
 
+  /** Library row of one envelope, by its id (titles repeat; ids never do). */
+  rowById(id: string) {
+    return this.rows.filter({ hasText: `ENV-${id.slice(0, 8).toUpperCase()}` });
+  }
+
+  /**
+   * Deletes ONE envelope by id through its row actions — used to clean up drafts a test
+   * created. Refuses ids it cannot find, so it can never delete something else.
+   */
+  async deleteDocument(id: string): Promise<void> {
+    await this.page.goto('/documents', { waitUntil: 'domcontentloaded' });
+    await this.settle();
+    const row = this.rowById(id);
+    await expect(row, `Cleanup: the draft ENV-${id.slice(0, 8).toUpperCase()} is not in the library`).toHaveCount(1, { timeout: 20_000 });
+    const menu = this.page.getByRole('menu');
+    await clickUntilVisible(row.getByRole('button', { name: 'More actions' }), menu, { what: 'The row actions menu did not open' });
+    await menu.getByRole('menuitem', { name: 'Delete', exact: true }).click();
+    const confirm = this.page
+      .getByRole('alertdialog')
+      .or(this.page.getByRole('dialog'))
+      .getByRole('button', { name: /^(Delete|Move to trash|Confirm|Yes)/i });
+    if (await confirm.first().isVisible({ timeout: 3_000 }).catch(() => false)) await confirm.first().click();
+    await expect(row, `Cleanup: the draft ENV-${id.slice(0, 8).toUpperCase()} was not removed from the library`).toHaveCount(0, { timeout: 20_000 });
+  }
+
   rowByName(name: string | RegExp) {
     return this.rows.filter({ hasText: name });
   }
@@ -135,7 +166,7 @@ export class DocumentsPage extends BasePage {
       const confirm = this.page
         .getByRole('alertdialog')
         .or(this.page.getByRole('dialog'))
-        .getByRole('button', { name: /^(Delete|Move to trash|Confirm|Yes)/ });
+        .getByRole('button', { name: /^(Delete|Move to trash|Confirm|Yes)/i });
       if (await confirm.first().isVisible({ timeout: 2_000 }).catch(() => false)) await confirm.first().click();
       await expect(items).toHaveCount(count - 1, { timeout: 10_000 });
       deleted++;

@@ -8,8 +8,14 @@ test.describe('Public site', () => {
     await page.goto('/');
     await expect(page).toHaveTitle(/eSignPro/);
     await expect(page.getByRole('heading', { level: 1 })).toContainText(/Electronic Signatures/i);
-    await expect(page.getByRole('link', { name: /log in|sign in/i }).first()).toBeVisible();
-    await expect(page.getByRole('link', { name: /start free/i }).first()).toBeVisible();
+    /* The header renders a desktop and a phone variant; one is display:none, so pick the visible one.
+       On phones "Log in" lives in the hamburger menu (<details>), so open it first. */
+    const logIn = page.getByRole('link', { name: /log in|sign in/i }).filter({ visible: true }).first();
+    if (!(await logIn.isVisible().catch(() => false))) {
+      await page.locator('header summary').filter({ visible: true }).first().click();
+    }
+    await expect(logIn).toBeVisible();
+    await expect(page.getByRole('link', { name: /start free/i }).filter({ visible: true }).first()).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Free', exact: true }).first()).toBeVisible();
   });
 

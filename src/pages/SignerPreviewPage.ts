@@ -5,14 +5,14 @@ export class SignerPreviewPage extends BasePage {
   protected path = '/documents';
 
   readonly heading = this.page.getByRole('heading', { level: 1, name: 'Signer experience' });
-  readonly desktopToggle = this.page.getByRole('button', { name: 'Desktop' });
-  readonly mobileToggle = this.page.getByRole('button', { name: 'Mobile' });
-  readonly startSigningButton = this.page.getByRole('button', { name: 'Start signing' });
-  readonly disclosureButton = this.page.getByRole('button', { name: 'Disclosure' });
-  readonly declineButton = this.page.getByRole('button', { name: 'Decline' });
-  readonly reassignButton = this.page.getByRole('button', { name: 'Reassign' });
-  readonly finishButton = this.page.getByRole('button', { name: 'Finish' });
-  readonly downloadUnsignedButton = this.page.getByRole('button', { name: 'Download unsigned PDF' });
+  readonly desktopToggle = this.healButton('Desktop', false);
+  readonly mobileToggle = this.healButton('Mobile', false);
+  readonly startSigningButton = this.healButton('Start signing', false);
+  readonly disclosureButton = this.healButton('Disclosure', false);
+  readonly declineButton = this.healButton('Decline', false);
+  readonly reassignButton = this.healButton('Reassign', false);
+  readonly finishButton = this.healButton('Finish', false);
+  readonly downloadUnsignedButton = this.healButton('Download unsigned PDF', false);
   readonly previewNotice = this.page.getByText(/Preview only\. Anything you fill in here is not saved/);
   readonly backToEditingLink = this.page.getByRole('link', { name: 'Back to editing' });
   readonly progress = this.page.getByRole('progressbar', { name: 'Required fields completed' });

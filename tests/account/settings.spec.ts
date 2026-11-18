@@ -1,4 +1,5 @@
 import { test, expect } from '../../src/fixtures/test';
+import { API } from '../../src/helpers/api';
 import { waitForHydration } from '../../src/helpers/wait';
 
 /* Read-only checks of the account sub-pages and the notifications centre. */
@@ -100,12 +101,18 @@ test.describe('Account settings pages', () => {
     }
   });
 
-  test('branding is gated on the Free plan', async ({ page }) => {
+  test('branding is gated on the Free plan and available on paid plans', async ({ page, request }) => {
+    const plan = (await (await request.get(API.billingUsage)).json()).plan_code as string;
     await page.goto('/account/brand');
     await waitForHydration(page);
 
     await expect(page.getByRole('heading', { level: 1, name: 'Branding themes' })).toBeVisible();
-    await expect(page.getByText('Branding is not included in the Free plan.')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'View plans' })).toBeVisible();
+    if (plan === 'free') {
+      await expect(page.getByText('Branding is not included in the Free plan.'), 'Free plan must show the branding gate').toBeVisible();
+      await expect(page.getByRole('link', { name: 'View plans' })).toBeVisible();
+    } else {
+      await expect(page.getByText(/not included in the .* plan/i), `Branding must not be gated on the ${plan} plan`).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'New theme' }), `The ${plan} plan should allow creating a theme`).toBeVisible();
+    }
   });
 });

@@ -5,7 +5,7 @@ import { test, expect } from '../../src/fixtures/test';
  * draft. Fields are only selected and dialogs are cancelled — nothing is saved.
  */
 test.describe('Builder details', () => {
-  test.describe.configure({ mode: 'serial' });
+  test.describe.configure({ mode: 'default' }); /* in order, one worker; a failure never skips the rest */
 
   test.beforeEach(async ({ preparePage }) => {
     await preparePage.goto();
@@ -15,12 +15,7 @@ test.describe('Builder details', () => {
   test('inspector exposes validation and conditional logic', async ({ page, preparePage }) => {
     /* Fields may overlap; the last one in DOM order is on top and receives the click. */
     const placed = page.getByRole('button', { name: / for Recipient \d+, (required|optional)/ }).last();
-    /* Canvas fields render after the builder heading; wait before deciding to skip. */
-    const hasField = await placed
-      .waitFor({ state: 'visible', timeout: 10_000 })
-      .then(() => true)
-      .catch(() => false);
-    test.skip(!hasField, 'Latest draft has no placed fields');
+    await preparePage.requirePlacedFields();
 
     await placed.click();
     await expect(page.getByRole('textbox', { name: 'Label' })).toBeVisible();
