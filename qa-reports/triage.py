@@ -28,12 +28,14 @@ RUNS = [
 
 # A failure whose error matches this is an environment/infrastructure problem (live site
 # unreachable or the API timing out), not an application or automation defect → "Blocked".
-ENV_ERROR = r"Page crashed|Target crashed|ERR_CONNECTION|ERR_TIMED_OUT|net::ERR|page\.goto: Timeout|reach the eSignPro API|reason=superseded"
+ENV_ERROR = r"Test timeout of \d+ms exceeded|Page crashed|Target crashed|ERR_CONNECTION|ERR_TIMED_OUT|ECONNRESET|socket hang up|hCaptcha challenge|net::ERR|page\.goto: Timeout|reach the eSignPro API|reason=superseded"
 
 _BUG_IDS = [f"BUG-{i:02d}" for i in range(1, 29)]
 FAILURES = {
     # Known-bug reproductions: the test asserts the correct behaviour and fails while the bug exists.
     **{rf"\b{b}\b": {"class": "Application defect", "bug": b, "note": "Reproduction test still fails — defect open."} for b in _BUG_IDS},
+    r"switches the reporting period": {"class": "Application defect", "bug": "BUG-28",
+                                       "note": "WebKit only: period changes are ignored after the first one (fails only in the webkit project)."},
     r"UF-34 every report section": {"class": "Application defect", "bug": "BUG-28",
                                      "note": "WebKit only: after the period changes, report section tabs ignore clicks."},
     r"UF-19 sender places": {"class": "Application defect", "bug": "BUG-05",
@@ -198,7 +200,8 @@ BUGS += [
      "expected": "TTFB ≤ 1.5 s, DOMContentLoaded ≤ 3 s, load ≤ 5 s on a cold cache; static assets from a CDN/edge cache.",
      "actual": "6–7 of 8 pages over budget per run (e.g. load 11.3 s on /, 11.2 s /contacts, DCL 7.5 s /pricing, TTFB 2.1 s /account/billing). A 6 KB chunk: TTFB 1.0–1.8 s (connect 0.25 s); Stripe's CDN served 290 KB in 0.13–0.6 s on the same network. Warm-cache loads ~1.8–2.2 s. HTTP/2 in use.",
      "environment": ENV_CHROMIUM + " — measured from the test machine (South Asia); repeat from the main user region to size the impact.",
-     "found": "Coverage-gap tests 17 Nov 2026", "remarks": "PERF-001/002. API latency is fine (p95 within 1.5 s). Recommend CDN for /_next/static and checking origin worker saturation."},
+     "found": "Coverage-gap tests 17 Nov 2026", "status": "Confirmed",
+     "remarks": "PERF-001/002. INTERMITTENT, load-dependent: 6/8 pages over budget (17 Nov), 7/8 (19 Nov 15:13 UTC), 0/8 (19 Nov 15:53 UTC). Not fixed — the origin still serves static assets with ~1 s TTFB. Recommend a CDN for /_next/static."},
 ]
 
 # Scenarios whose state before this cycle differs from "New test ⇒ not implemented".
@@ -223,10 +226,10 @@ BUGS += [
      "actual": "Recent charges is empty; invoice QQHAP1JG-0001 is Paid $12.00.",
      "environment": ENV_CHROMIUM + " - Stripe TEST mode", "found": "Payment tests 18 Nov 2026", "remarks": ""},
     {"id": "BUG-28", "module": "Reports", "category": "Compatibility", "severity": "Major", "priority": "High", "new": True,
-     "description": "WebKit (Safari engine): after changing the report period, clicking any report section tab does nothing. The tabs' links are correct (/reports?section=templates&range=12m); Chromium and Firefox navigate.",
+     "description": "WebKit (Safari engine): once the report period has been changed, the Reports page ignores further period changes and every section-tab click (links are correct, e.g. /reports?section=templates&range=12m). Chromium and Firefox work.",
      "steps": "1. In Safari/WebKit open /reports.\n2. Change the period to Last 12 months (URL gets ?range=12m).\n3. Click By document / By template / By recipient.",
      "expected": "The clicked section opens, as before the period was changed and as in Chromium/Firefox.",
-     "actual": "No navigation for any tab (reproduced 5/5 tabs in a standalone WebKit session and in the suite); before changing the period the tabs work.",
+     "actual": "Standalone WebKit: 5/5 section tabs do nothing after the change; a second period change was ignored 2/2 (URL stays ?range=12m); the first change itself failed 1 of 3 tries. Before any change the tabs work.",
      "environment": "WebKit 26 (Playwright 1.65, Desktop Safari profile), Windows 10, https://esignpro.net — confirm on a real Safari/macOS",
      "found": "Cross-browser run 18 Nov 2026", "remarks": "Reproduction: tests/reports/reports.spec.ts (BUG-28, @smoke, runs cross-browser)."},
 ]

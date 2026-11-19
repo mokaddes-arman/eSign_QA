@@ -10,7 +10,7 @@
  *
  * It never fails or slows a test run's result: problems are printed as warnings.
  * Disable with QA_REPORTS=off. Skipped on CI (artifacts are uploaded there instead) and
- * for runs that executed no tests (e.g. --list).
+ * for runs that executed no tests (e.g. --list) or used --repeat-each (stability checks).
  */
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
@@ -24,8 +24,12 @@ export default class QaReportsReporter implements Reporter {
   private finished = 0;
   private status: FullResult['status'] = 'passed';
 
-  onBegin(_config: FullConfig, suite: Suite): void {
+  private repeat = 1;
+
+  onBegin(config: FullConfig, suite: Suite): void {
     this.tests = suite.allTests().length;
+    /* --repeat-each runs are stability checks, not a statement of current status. */
+    this.repeat = Math.max(1, ...config.projects.map((p) => p.repeatEach));
   }
 
   onTestEnd(_test: TestCase, _result: TestResult): void {
@@ -38,6 +42,10 @@ export default class QaReportsReporter implements Reporter {
 
   async onExit(): Promise<void> {
     if (process.env.QA_REPORTS === 'off' || process.env.CI || this.tests === 0 || this.finished === 0 || this.status === 'interrupted') return;
+    if (this.repeat > 1) {
+      console.log('[qa-reports] --repeat-each run: not archived as a status run (reports unchanged).');
+      return;
+    }
 
     const archive = spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'archive-reports.mjs'), 'auto'], { cwd: ROOT, encoding: 'utf8' });
     if (archive.status !== 0) {

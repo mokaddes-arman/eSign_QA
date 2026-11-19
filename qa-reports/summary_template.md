@@ -75,8 +75,15 @@ Steps to reproduce, expected/actual results and screenshot/trace paths: `QA_Bug_
    downgrades are scheduled (BUG-26); "Recent charges" ignores a paid invoice (BUG-27).
 3. **Template management** — Delete/Archive do nothing and names are not unique (BUG-07/10).
 4. **Slow first visit** — static assets ~1–1.8 s each from the origin; cold loads 6–15 s (BUG-24).
-5. **Testing on production with one account** — one active session per account; every write
-   (cards, plan changes, signup workspaces, drafts moved to Trash) lands in the live workspace.
+5. **Safari/WebKit: Reports page stops navigating after the period changes** (BUG-28) — further
+   period changes and every section tab are ignored; Chromium and Firefox work.
+6. **Testing on production with one account** — one active session per account: on 19 Nov the
+   suite was signed out mid-run when the account signed in elsewhere. Every write (cards, plan
+   changes, signup workspaces, drafts moved to Trash) lands in the live workspace.
+7. **Stripe anti-bot challenge** — after repeated automated card additions Stripe now shows an
+   hCaptcha challenge in Checkout, so BIL-004 (add a card) fails as an environment issue. Fix on
+   the Stripe side: use a Stripe test-mode account/settings without the challenge for QA, or
+   run BIL-004 less often (each run adds a card; the UI has no "remove card").
 
 ## 6. Remaining work
 
@@ -86,6 +93,10 @@ Steps to reproduce, expected/actual results and screenshot/trace paths: `QA_Bug_
 - **Manual:** screen-reader passes, UX heuristic review, 2FA/passkeys, password change.
 - **Automatable next:** strengthen the remaining presence-only tests to assert outcomes; write
   tests for archive/trash lifecycle, contact edit, report export on staging.
+- **Environment to fix:** a dedicated QA account (or staging) so nobody else's sign-in ends the
+  suite's session; Stripe test settings without hCaptcha; a CDN for static assets (BUG-24).
+- **Known environment noise:** Playwright's Firefox build crashes the tab on two `/documents`
+  select tests (not reproducible in a standalone session) — reported as environment, not a defect.
 
 Gap list with priorities and recommended actions: `QA_Gap_Analysis.xlsx`.
 

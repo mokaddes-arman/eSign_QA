@@ -128,6 +128,22 @@ def chromium_state(roles):
 
 INITIAL = chromium_state({"baseline"})
 FINAL = chromium_state({"baseline", "new", "final", "gated", "auto"})
+# Once a full automatic Chromium run exists, it defines which tests EXIST: the final state is
+# that run plus every later run. Results of tests that were renamed, moved to another project
+# or removed (e.g. the old opt-in payment/upload tests) no longer linger in the totals.
+_full = [i for i, r in enumerate(runs) if r["role"] == "auto"
+         and sum(t["project"] in ("chromium", "chromium-builder") for t in r["tests"]) >= 300]
+if _full:
+    FINAL = {}
+    for run in runs[_full[-1]:]:
+        for t in run["tests"]:
+            if t["project"] in CHROMIUM:
+                FINAL[t["key"]] = (run, t)
+    # The account project runs in its own step; keep its latest results even if it ran first.
+    for run in runs[:_full[-1]]:
+        for t in run["tests"]:
+            if t["project"] == "chromium-account" and t["key"] not in FINAL and run["role"] == "auto":
+                FINAL[t["key"]] = (run, t)
 XB = {p: {t["key"]: (run, t) for run in runs if run["role"] in ("xbrowser", "auto") for t in run["tests"] if t["project"] == p}
       for p in ("firefox", "webkit", "mobile-chrome")}
 

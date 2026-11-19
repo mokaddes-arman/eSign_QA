@@ -1,4 +1,4 @@
-import { expect } from '@playwright/test';
+import { expect, type FileChooser } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { clickUntilVisible } from '../helpers/wait';
 
@@ -90,14 +90,19 @@ export class DocumentsPage extends BasePage {
     await this.page.getByRole('button', { name: 'Create', exact: true }).click();
   }
 
+  /** Clicks "Upload & prepare" and picks a file. A click before hydration opens nothing (R3): retried. */
+  async chooseUploadFile(filePath: string): Promise<void> {
+    let chooser: FileChooser | undefined;
+    await expect(async () => {
+      [chooser] = await Promise.all([this.page.waitForEvent('filechooser', { timeout: 5_000 }), this.uploadPrepareButton.click()]);
+    }, '"Upload & prepare" did not open the file chooser').toPass({ timeout: 30_000 });
+    await chooser!.setFiles(filePath);
+  }
+
   async uploadDocument(filePath: string): Promise<void> {
     /* "Upload & prepare" opens the native file chooser and, once a file is
        chosen, creates the draft and routes straight to the builder. */
-    const [chooser] = await Promise.all([
-      this.page.waitForEvent('filechooser'),
-      this.uploadPrepareButton.click(),
-    ]);
-    await chooser.setFiles(filePath);
+    await this.chooseUploadFile(filePath);
     await expect(this.page).toHaveURL(/\/documents\/[0-9a-f-]+\/(prepare|workflow)/, {
       timeout: 30_000,
     });

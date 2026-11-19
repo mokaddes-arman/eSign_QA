@@ -3,8 +3,8 @@
 | | |
 |---|---|
 | Application | https://esignpro.net — **live production deployment** (test workspace "Global Softel") |
-| Report generated | **18 Nov 2026 17:29 UTC** (regenerated automatically after every test run) |
-| Latest test run | **18 Nov 2026 17:29 UTC** |
+| Report generated | **19 Nov 2026 16:10 UTC** (regenerated automatically after every test run) |
+| Latest test run | **19 Nov 2026 16:09 UTC** |
 | Suite | Playwright 1.65 + TypeScript, Page Object Model with self-healing locators |
 | Browsers | Chromium (primary, full suite), Firefox, WebKit, Pixel 7 emulation (smoke) |
 | Deliverables | `QA_Coverage_Matrix.xlsx` · `QA_Gap_Analysis.xlsx` · `QA_Execution_Summary.xlsx` · `QA_Bug_Report.xlsx` |
@@ -19,16 +19,16 @@
 
 | Question | Answer |
 |---|---|
-| Unique testing scenarios required | **380** across the nine testing categories |
-| Implemented (asserting the outcome) | **209** — 119 before this QA cycle |
+| Unique testing scenarios required | **382** across the nine testing categories |
+| Implemented (asserting the outcome) | **211** — 119 before this QA cycle |
 | Partially implemented | **77** (presence-only or subset checks) |
 | Missing (not implemented) | **94** — manual-only 22, blocked by an external dependency 45 |
-| Scenarios executed | **270** — passed **209**, failed **61** |
-| Skipped / Blocked / Not executed | **0** / **58** / **52** |
-| Test-level result (latest Chromium state) | **457 tests: 408 passed, 44 failed, 5 skipped** |
-| Failing tests by cause | 36 application defect, 7 environment, 1 not yet triaged |
-| Defects tracked | **27** — 1 Resolved (retest passed), 17 Confirmed, 9 New; severity 13 Major, 12 Minor, 2 Critical |
-| **Verified coverage** | **Implementation 55.0%** · **Execution 71.1%** · **Passing 55.0%** · **Execution pass rate 77.4%** |
+| Scenarios executed | **277** — passed **219**, failed **58** |
+| Skipped / Blocked / Not executed | **0** / **53** / **52** |
+| Test-level result (latest Chromium state) | **429 tests: 399 passed, 30 failed, 0 skipped** |
+| Failing tests by cause | 27 application defect, 3 environment |
+| Defects tracked | **28** — 19 Confirmed, 9 New; severity 14 Major, 12 Minor, 2 Critical |
+| **Verified coverage** | **Implementation 55.2%** · **Execution 72.5%** · **Passing 57.3%** · **Execution pass rate 79.1%** |
 
 Definitions: implementation = implemented ÷ required; execution = (passed + failed) ÷ required;
 passing = passed ÷ required; pass rate = passed ÷ executed. Denominator = unique scenarios.
@@ -38,15 +38,15 @@ passing = passed ÷ required; pass rate = passed ÷ executed. Denominator = uniq
 | Category | Required | Implemented (before → now) | Partial | Missing | Passed | Failed | Skipped | Blocked | Not run | Implementation | Execution | Passing | Pass rate |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Unit Testing | 12 | 0 → 0 | 0 | 12 | 0 | 0 | 0 | 12 | 0 | 0.0% → **0.0%** | 0.0% | 0.0% | 0.0% |
-| Integration Testing | 24 | 0 → 16 | 0 | 8 | 16 | 0 | 0 | 4 | 4 | 0.0% → **66.7%** | 66.7% | 66.7% | 100.0% |
-| Functional Testing | 173 | 63 → 84 | 52 | 37 | 117 | 18 | 0 | 9 | 29 | 36.4% → **48.6%** | 78.0% | 67.6% | 86.7% |
-| E2E Testing | 53 | 16 → 24 | 15 | 14 | 28 | 9 | 0 | 14 | 2 | 30.2% → **45.3%** | 69.8% | 52.8% | 75.7% |
-| Regression Testing | 31 | 21 → 27 | 1 | 3 | 1 | 25 | 0 | 2 | 3 | 67.7% → **87.1%** | 83.9% | 3.2% | 3.8% |
-| Security Testing | 36 | 3 → 24 | 2 | 10 | 25 | 1 | 0 | 4 | 6 | 8.3% → **66.7%** | 72.2% | 69.4% | 96.2% |
-| Performance Testing | 9 | 0 → 4 | 1 | 4 | 3 | 2 | 0 | 4 | 0 | 0.0% → **44.4%** | 55.6% | 33.3% | 60.0% |
-| Usability & Accessibility Testing | 28 | 11 → 19 | 5 | 4 | 15 | 5 | 0 | 3 | 5 | 39.3% → **67.9%** | 71.4% | 53.6% | 75.0% |
-| Compatibility Testing | 14 | 5 → 11 | 1 | 2 | 4 | 1 | 0 | 6 | 3 | 35.7% → **78.6%** | 35.7% | 28.6% | 80.0% |
-| **Total** | **380** | **119 → 209** | 77 | 94 | **209** | **61** | 0 | 58 | 52 | **31.3% → 55.0%** | **71.1%** | **55.0%** | **77.4%** |
+| Integration Testing | 24 | 0 → 16 | 0 | 8 | 15 | 0 | 0 | 5 | 4 | 0.0% → **66.7%** | 62.5% | 62.5% | 100.0% |
+| Functional Testing | 173 | 63 → 84 | 52 | 37 | 118 | 17 | 0 | 9 | 29 | 36.4% → **48.6%** | 78.0% | 68.2% | 87.4% |
+| E2E Testing | 53 | 16 → 24 | 15 | 14 | 27 | 8 | 0 | 16 | 2 | 30.2% → **45.3%** | 66.0% | 50.9% | 77.1% |
+| Regression Testing | 32 | 21 → 28 | 1 | 3 | 4 | 25 | 0 | 0 | 3 | 65.6% → **87.5%** | 90.6% | 12.5% | 13.8% |
+| Security Testing | 36 | 3 → 24 | 2 | 10 | 24 | 1 | 0 | 5 | 6 | 8.3% → **66.7%** | 69.4% | 66.7% | 96.0% |
+| Performance Testing | 9 | 0 → 4 | 1 | 4 | 5 | 0 | 0 | 4 | 0 | 0.0% → **44.4%** | 55.6% | 55.6% | 100.0% |
+| Usability & Accessibility Testing | 28 | 11 → 19 | 5 | 4 | 17 | 6 | 0 | 0 | 5 | 39.3% → **67.9%** | 82.1% | 60.7% | 73.9% |
+| Compatibility Testing | 15 | 5 → 12 | 1 | 2 | 9 | 1 | 0 | 2 | 3 | 33.3% → **80.0%** | 66.7% | 60.0% | 90.0% |
+| **Total** | **382** | **119 → 211** | 77 | 94 | **219** | **58** | 0 | 53 | 52 | **31.2% → 55.2%** | **72.5%** | **57.3%** | **79.1%** |
 
 Regression: most scenarios are bug retests, which "fail" while the bug is still open — a
 low pass rate there means the bugs are not fixed yet, not that the suite is unstable.
@@ -77,7 +77,7 @@ low pass rate there means the bugs are not fixed yet, not that the suite is unst
 |---|---|---|---|---|
 | BUG-07 | Critical | Confirmed | Templates | Template names are not unique (Save and Rename both accept an existing name). |
 | BUG-10 | Critical | Confirmed | Templates | Delete (and Archive) on a template does nothing — no request, no confirmation, template stays. |
-| BUG-01 | Major | Resolved (retest passed) | Prepare | Field label/placeholder text is unreadable when the document page has a black background. |
+| BUG-01 | Major | Confirmed | Prepare | Field label/placeholder text is unreadable when the document page has a black background. |
 | BUG-03 | Major | Confirmed | Signer | Preview cannot show how all recipients will see the document. |
 | BUG-04 | Major | Confirmed | Prepare | Opening another document while one is open in the builder shows no warning. |
 | BUG-05 | Major | Confirmed | Prepare | Placeholder text set in the inspector is not shown on the editing canvas. |
@@ -88,8 +88,9 @@ low pass rate there means the bugs are not fixed yet, not that the suite is unst
 | BUG-18 | Major | Confirmed | Developer | Webhook 'Create endpoint' is enabled for a value that is not a URL. |
 | BUG-20 | Major | New | Platform | Reflow (WCAG 1.4.10): the sign-in page and the signed-in app shell are 360 px wide, so a 320 px viewport (400 % zoom on 1280 px) scrolls hor |
 | BUG-23 | Major | New | Documents | Documents status filter 'Drafts' returns 0 documents while the 'Drafts' view lists all 6 prepared drafts. |
-| BUG-24 | Major | New | Platform | Slow first visit: immutable static JS chunks are served from the origin (nginx, no CDN) with ~1.0–1.8 s time-to-first-byte each; cold page l |
+| BUG-24 | Major | Confirmed | Platform | Slow first visit: immutable static JS chunks are served from the origin (nginx, no CDN) with ~1.0–1.8 s time-to-first-byte each; cold page l |
 | BUG-25 | Major | New | Billing | Upgrading Free to Team invoiced the full month ($12.00) although the change-plan preview promised 'Prorated today $9.99'; the billing anchor |
+| BUG-28 | Major | New | Reports | WebKit (Safari engine): once the report period has been changed, the Reports page ignores further period changes and every section-tab click |
 | BUG-02 | Minor | Confirmed | Prepare | Favouriting a field does not move it to the top of the field palette. |
 | BUG-09 | Minor | Confirmed | Workflow | Recipients can be edited inline in the Workflow step as well as in Manage recipients. |
 | BUG-12 | Minor | Confirmed | Account | Organization section heading reads 'People1' (count glued to the label). |
@@ -114,8 +115,15 @@ Steps to reproduce, expected/actual results and screenshot/trace paths: `QA_Bug_
    downgrades are scheduled (BUG-26); "Recent charges" ignores a paid invoice (BUG-27).
 3. **Template management** — Delete/Archive do nothing and names are not unique (BUG-07/10).
 4. **Slow first visit** — static assets ~1–1.8 s each from the origin; cold loads 6–15 s (BUG-24).
-5. **Testing on production with one account** — one active session per account; every write
-   (cards, plan changes, signup workspaces, drafts moved to Trash) lands in the live workspace.
+5. **Safari/WebKit: Reports page stops navigating after the period changes** (BUG-28) — further
+   period changes and every section tab are ignored; Chromium and Firefox work.
+6. **Testing on production with one account** — one active session per account: on 19 Nov the
+   suite was signed out mid-run when the account signed in elsewhere. Every write (cards, plan
+   changes, signup workspaces, drafts moved to Trash) lands in the live workspace.
+7. **Stripe anti-bot challenge** — after repeated automated card additions Stripe now shows an
+   hCaptcha challenge in Checkout, so BIL-004 (add a card) fails as an environment issue. Fix on
+   the Stripe side: use a Stripe test-mode account/settings without the challenge for QA, or
+   run BIL-004 less often (each run adds a card; the UI has no "remove card").
 
 ## 6. Remaining work
 
@@ -125,6 +133,10 @@ Steps to reproduce, expected/actual results and screenshot/trace paths: `QA_Bug_
 - **Manual:** screen-reader passes, UX heuristic review, 2FA/passkeys, password change.
 - **Automatable next:** strengthen the remaining presence-only tests to assert outcomes; write
   tests for archive/trash lifecycle, contact edit, report export on staging.
+- **Environment to fix:** a dedicated QA account (or staging) so nobody else's sign-in ends the
+  suite's session; Stripe test settings without hCaptcha; a CDN for static assets (BUG-24).
+- **Known environment noise:** Playwright's Firefox build crashes the tab on two `/documents`
+  select tests (not reproducible in a standalone session) — reported as environment, not a defect.
 
 Gap list with priorities and recommended actions: `QA_Gap_Analysis.xlsx`.
 
@@ -151,9 +163,15 @@ Gap list with priorities and recommended actions: `QA_Gap_Analysis.xlsx`.
 | Automatic run 2026-11-18 17-06-48 | 18 Nov 2026 17:06 UTC | chromium-account | 22 | 17 | 5 | 0 | `reports-archive/2026-11-18T17-06-48-532Z_auto` |
 | Automatic run 2026-11-18 17-16-11 | 18 Nov 2026 17:16 UTC | firefox, mobile-chrome, webkit | 120 | 115 | 5 | 0 | `reports-archive/2026-11-18T17-16-11-269Z_auto` |
 | Automatic run 2026-11-18 17-19-24 | 18 Nov 2026 17:19 UTC | chromium, webkit | 16 | 12 | 4 | 0 | `reports-archive/2026-11-18T17-19-24-456Z_auto` |
-| Automatic run 2026-11-18 17-23-11 | 18 Nov 2026 17:23 UTC | chromium, webkit | 20 | 17 | 3 | 0 | `reports-archive/2026-11-18T17-23-11-995Z_auto` |
-| Automatic run 2026-11-18 17-26-08 | 18 Nov 2026 17:26 UTC | chromium, webkit | 16 | 14 | 2 | 0 | `reports-archive/2026-11-18T17-26-08-654Z_auto` |
 | Automatic run 2026-11-18 17-29-20 | 18 Nov 2026 17:29 UTC | chromium, firefox, webkit | 3 | 2 | 1 | 0 | `reports-archive/2026-11-18T17-29-20-393Z_auto` |
+| Automatic run 2026-11-19 15-09-43 | 19 Nov 2026 15:09 UTC | chromium, chromium-builder | 408 | 369 | 39 | 0 | `reports-archive/2026-11-19T15-09-43-516Z_auto` |
+| Automatic run 2026-11-19 15-17-07 | 19 Nov 2026 15:17 UTC | chromium-account | 22 | 12 | 10 | 0 | `reports-archive/2026-11-19T15-17-07-071Z_auto` |
+| Automatic run 2026-11-19 15-30-31 | 19 Nov 2026 15:30 UTC | chromium-account | 3 | 2 | 1 | 0 | `reports-archive/2026-11-19T15-30-31-230Z_auto` |
+| Automatic run 2026-11-19 15-31-37 | 19 Nov 2026 15:31 UTC | chromium-account | 3 | 3 | 0 | 0 | `reports-archive/2026-11-19T15-31-37-536Z_auto` |
+| Automatic run 2026-11-19 15-48-21 | 19 Nov 2026 15:48 UTC | chromium, chromium-builder | 408 | 381 | 27 | 0 | `reports-archive/2026-11-19T15-48-21-232Z_auto` |
+| Automatic run 2026-11-19 15-53-48 | 19 Nov 2026 15:53 UTC | chromium-account | 22 | 19 | 3 | 0 | `reports-archive/2026-11-19T15-53-48-972Z_auto` |
+| Automatic run 2026-11-19 16-01-44 | 19 Nov 2026 16:01 UTC | firefox, mobile-chrome, webkit | 123 | 119 | 4 | 0 | `reports-archive/2026-11-19T16-01-44-201Z_auto` |
+| Automatic run 2026-11-19 16-09-34 | 19 Nov 2026 16:09 UTC | chromium-account | 2 | 1 | 1 | 0 | `reports-archive/2026-11-19T16-09-34-676Z_auto` |
 
 Reports regenerate automatically after every run (`reporters/qa-reports-reporter.ts`):
 the run is archived to `reports-archive/<run date>_auto/` and these files are rebuilt.

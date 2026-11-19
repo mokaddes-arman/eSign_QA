@@ -74,7 +74,10 @@ export class BillingPage extends BasePage {
     await frame.locator('#cardExpiry').fill(card.expiry);
     await frame.locator('#cardCvc').fill(card.cvc);
     await frame.locator('#billingName').fill(card.name);
-    await frame.locator('#billingCountry').selectOption(card.country).catch(() => undefined);
+    /* Stripe pre-selects the visitor's country; pick the configured one (value or label). */
+    const country = frame.locator('#billingCountry');
+    await country.selectOption(card.country).catch(() => country.selectOption({ label: card.country }));
+    await expect(country, `Stripe Checkout did not accept country "${card.country}"`).toHaveValue(/.+/);
     const postal = frame.locator('#billingPostalCode');
     if (await postal.isVisible().catch(() => false)) await postal.fill('10001');
   }
@@ -82,7 +85,20 @@ export class BillingPage extends BasePage {
   async submitCard(): Promise<void> {
     const frame = await this.checkoutFrame();
     await frame.getByRole('button', { name: /^Save/ }).click();
-    await expect(this.paymentDialog, 'Stripe did not accept the card (the payment dialog stayed open)').toBeHidden({ timeout: 60_000 });
+    const closed = await this.paymentDialog.waitFor({ state: 'hidden', timeout: 60_000 }).then(() => true, () => false);
+    if (!closed) {
+      /* Say WHY: Stripe shows field errors or a decline message inside its frame. */
+      const reasons = await frame
+        .locator('[role="alert"], .FieldError, .Error, [class*="error" i]')
+        .allInnerTexts()
+        .then((t) => t.map((x) => x.trim()).filter(Boolean).slice(0, 3))
+        .catch(() => [] as string[]);
+      const captcha = this.page.frames().some((f) => /hcaptcha.*challenge|challenge.*hcaptcha/i.test(f.url()));
+      throw new Error(
+        `Stripe did not accept the card (the payment dialog stayed open). ` +
+          (reasons.length ? `Stripe says: ${reasons.join(' | ')}` : captcha ? 'Stripe showed an hCaptcha challenge (anti-bot), which automation cannot solve.' : 'No error was shown in the checkout.'),
+      );
+    }
   }
 
   /** Current plan code from the billing API (free | team | business | enterprise). */

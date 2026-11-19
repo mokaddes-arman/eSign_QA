@@ -52,7 +52,8 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 2 : undefined,
-  timeout: 60_000,
+  /* 120 s: on slow days a single live-site navigation can take up to 60 s (navigationTimeout). */
+  timeout: 120_000,
   expect: { timeout: 10_000 },
 
   reporter: [

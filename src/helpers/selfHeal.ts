@@ -67,6 +67,10 @@ export async function explainFailure(page: Page | undefined, rawMessage: string)
   if (/reason=superseded|signed in elsewhere/.test(message)) {
     return 'Environment: the saved session was signed out by another sign-in (single active session). Run npm run auth:refresh.';
   }
+  if (/Test timeout of \d+ms exceeded/.test(message)) {
+    const where = page && !page.isClosed() ? ` on ${page.url()}` : '';
+    return `The test ran out of time${where} before reaching its assertions — usually the live site answering slowly; the trace shows which step was waiting.`;
+  }
   if (/Page crashed|Target crashed/.test(message)) {
     return 'Environment: the browser tab crashed during the test (seen only with Playwright\'s Firefox build on /documents <select> controls; not reproducible in a standalone session). Not a product defect.';
   }

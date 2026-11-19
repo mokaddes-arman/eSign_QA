@@ -199,7 +199,7 @@ export const KNOWN_BUGS = {
   BUG28: {
     id: 'BUG-28',
     severity: 'S3',
-    summary: 'WebKit/Safari: after changing the report period, clicking a report section tab does nothing (hrefs are correct; Chromium navigates)',
+    summary: 'WebKit/Safari: after the report period is changed once, further period changes and section-tab clicks do nothing (Chromium and Firefox work)',
     expected: 'Report section tabs navigate in every browser, also after the period changed',
     caseId: 'REP-002',
   },

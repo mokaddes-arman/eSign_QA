@@ -26,10 +26,13 @@ env:
   ESIGN_COMPANY_TYPE: ${{ vars.ESIGN_COMPANY_TYPE || 'Other' }}
   ESIGN_COMPANY_SIZE: ${{ vars.ESIGN_COMPANY_SIZE || '1–50' }}
   AUTH_STATE_PATH: auth/storageState.json
-  # Quota-consuming / real-signup / payment cases stay opt-in on CI.
-  RUN_UPLOAD: 'false'
-  RUN_SIGNUP: 'false'
-  RUN_PAYMENT: 'false'
+  # The RUN_* opt-in flags were removed (18 Nov 2026): no case is skipped. CI runs the
+  # `chromium` + `chromium-builder` projects only. The `chromium-account` project (Stripe
+  # test-mode payments, uploads, sign-in/sign-out, performance) is NOT run here: it needs the
+  # CARD_* secrets, changes the live billing plan, and ends the account's single session.
+  # Run it locally with `npm run test:all`. Note: the signup test (tests/auth/signup.spec.ts)
+  # does run on CI and registers one unverified qa.signup+<time>@example.com workspace per run.
+  # The automatic qa-reports/ regeneration is disabled on CI (reporters/qa-reports-reporter.ts).
   # Known-bug checks are wrapped in test.fail(): the job stays green while a reported
   # defect is still open and turns red when one is fixed (promote it to a normal test).
   KNOWN_BUGS: expect-fail
@@ -39,7 +42,7 @@ jobs:
   chromium:
     name: Chromium — smoke on PR, full otherwise
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
 
     steps:
       - name: Checkout
@@ -145,7 +148,7 @@ jobs:
     needs: chromium
     if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       max-parallel: 1

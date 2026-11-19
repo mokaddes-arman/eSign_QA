@@ -16,6 +16,23 @@ import { expectUploadRefused, signatureRequestsLeft } from '../../src/helpers/qu
 const SAMPLE_DOC = path.resolve(__dirname, '../fixtures/sample-agreement.png');
 
 test.describe('Documents · upload (quota-aware) @quota', () => {
+  /* Every document that did not exist before the test is trashed in afterEach — which runs
+     even when the test times out, and catches a draft created before its id was read.
+     A leaked draft would become the builder tests' "most recent draft". This spec runs
+     alone in the serial chromium-account project, so no other test creates drafts meanwhile. */
+  let existing = new Set<string>();
+  const created: string[] = [];
+  test.beforeEach(async ({ request }) => {
+    existing = new Set(((await (await request.get(API.documents)).json()) as { id: string }[]).map((d) => d.id));
+  });
+  test.afterEach(async ({ documentsPage, request }) => {
+    const now = ((await (await request.get(API.documents)).json()) as { id: string }[]).map((d) => d.id);
+    for (const id of new Set([...created, ...now.filter((id) => !existing.has(id))])) {
+      if (now.includes(id)) await documentsPage.deleteDocument(id);
+    }
+    created.length = 0;
+  });
+
   test('DOC-009 / DOC-022 library "Upload & prepare" creates a draft, or is refused when the quota is used up', async ({ documentsPage, page, request }) => {
     const docsBefore: { id: string }[] = await (await request.get(API.documents)).json();
     const quota = await signatureRequestsLeft(request);
@@ -23,8 +40,7 @@ test.describe('Documents · upload (quota-aware) @quota', () => {
     await documentsPage.goto();
 
     if (quota.left === 0) {
-      const [chooser] = await Promise.all([page.waitForEvent('filechooser'), documentsPage.uploadPrepareButton.click()]);
-      await chooser.setFiles(SAMPLE_DOC);
+      await documentsPage.chooseUploadFile(SAMPLE_DOC);
       await expectUploadRefused(page, request, /\/documents(\?|$)/, docsBefore.length);
       return;
     }
@@ -32,12 +48,11 @@ test.describe('Documents · upload (quota-aware) @quota', () => {
     await documentsPage.uploadDocument(SAMPLE_DOC);
     const id = /\/documents\/([0-9a-f-]{36})\//.exec(page.url())?.[1];
     expect(id, 'The builder URL carries the new document id').toBeTruthy();
-    try {
+    created.push(id!);
+    {
       await expect(page.getByRole('heading', { name: 'Prepare document' })).toBeVisible();
       expect(docsBefore.map((d) => d.id), 'The upload created a NEW draft').not.toContain(id);
       expect((await signatureRequestsLeft(request)).left, 'The new draft consumed one signature request').toBe(quota.left - 1);
-    } finally {
-      await documentsPage.deleteDocument(id!);
     }
   });
 
@@ -55,11 +70,10 @@ test.describe('Documents · upload (quota-aware) @quota', () => {
 
     await preparePage.upload(SAMPLE_DOC);
     const id = preparePage.documentIdFromUrl();
-    try {
+    created.push(id);
+    {
       expect(docsBefore.map((d) => d.id), 'The upload created a NEW draft').not.toContain(id);
       await preparePage.waitForCanvas();
-    } finally {
-      await documentsPage.deleteDocument(id);
     }
   });
 });
