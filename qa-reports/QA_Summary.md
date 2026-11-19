@@ -3,8 +3,8 @@
 | | |
 |---|---|
 | Application | https://esignpro.net — **live production deployment** (test workspace "Global Softel") |
-| Report generated | **19 Nov 2026 16:10 UTC** (regenerated automatically after every test run) |
-| Latest test run | **19 Nov 2026 16:09 UTC** |
+| Report generated | **19 Nov 2026 16:50 UTC** (regenerated automatically after every test run) |
+| Latest test run | **19 Nov 2026 16:50 UTC** |
 | Suite | Playwright 1.65 + TypeScript, Page Object Model with self-healing locators |
 | Browsers | Chromium (primary, full suite), Firefox, WebKit, Pixel 7 emulation (smoke) |
 | Deliverables | `QA_Coverage_Matrix.xlsx` · `QA_Gap_Analysis.xlsx` · `QA_Execution_Summary.xlsx` · `QA_Bug_Report.xlsx` |
@@ -23,12 +23,12 @@
 | Implemented (asserting the outcome) | **211** — 119 before this QA cycle |
 | Partially implemented | **77** (presence-only or subset checks) |
 | Missing (not implemented) | **94** — manual-only 22, blocked by an external dependency 45 |
-| Scenarios executed | **277** — passed **219**, failed **58** |
+| Scenarios executed | **277** — passed **223**, failed **54** |
 | Skipped / Blocked / Not executed | **0** / **53** / **52** |
-| Test-level result (latest Chromium state) | **429 tests: 399 passed, 30 failed, 0 skipped** |
-| Failing tests by cause | 27 application defect, 3 environment |
-| Defects tracked | **28** — 19 Confirmed, 9 New; severity 14 Major, 12 Minor, 2 Critical |
-| **Verified coverage** | **Implementation 55.2%** · **Execution 72.5%** · **Passing 57.3%** · **Execution pass rate 79.1%** |
+| Test-level result (latest Chromium state) | **429 tests: 401 passed, 28 failed, 0 skipped** |
+| Failing tests by cause | 25 application defect, 3 environment |
+| Defects tracked | **28** — 18 Confirmed, 1 Resolved (retest passed), 9 New; severity 14 Major, 12 Minor, 2 Critical |
+| **Verified coverage** | **Implementation 55.2%** · **Execution 72.5%** · **Passing 58.4%** · **Execution pass rate 80.5%** |
 
 Definitions: implementation = implemented ÷ required; execution = (passed + failed) ÷ required;
 passing = passed ÷ required; pass rate = passed ÷ executed. Denominator = unique scenarios.
@@ -39,14 +39,14 @@ passing = passed ÷ required; pass rate = passed ÷ executed. Denominator = uniq
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Unit Testing | 12 | 0 → 0 | 0 | 12 | 0 | 0 | 0 | 12 | 0 | 0.0% → **0.0%** | 0.0% | 0.0% | 0.0% |
 | Integration Testing | 24 | 0 → 16 | 0 | 8 | 15 | 0 | 0 | 5 | 4 | 0.0% → **66.7%** | 62.5% | 62.5% | 100.0% |
-| Functional Testing | 173 | 63 → 84 | 52 | 37 | 118 | 17 | 0 | 9 | 29 | 36.4% → **48.6%** | 78.0% | 68.2% | 87.4% |
+| Functional Testing | 173 | 63 → 84 | 52 | 37 | 120 | 15 | 0 | 9 | 29 | 36.4% → **48.6%** | 78.0% | 69.4% | 88.9% |
 | E2E Testing | 53 | 16 → 24 | 15 | 14 | 27 | 8 | 0 | 16 | 2 | 30.2% → **45.3%** | 66.0% | 50.9% | 77.1% |
-| Regression Testing | 32 | 21 → 28 | 1 | 3 | 4 | 25 | 0 | 0 | 3 | 65.6% → **87.5%** | 90.6% | 12.5% | 13.8% |
+| Regression Testing | 32 | 21 → 28 | 1 | 3 | 6 | 23 | 0 | 0 | 3 | 65.6% → **87.5%** | 90.6% | 18.8% | 20.7% |
 | Security Testing | 36 | 3 → 24 | 2 | 10 | 24 | 1 | 0 | 5 | 6 | 8.3% → **66.7%** | 69.4% | 66.7% | 96.0% |
 | Performance Testing | 9 | 0 → 4 | 1 | 4 | 5 | 0 | 0 | 4 | 0 | 0.0% → **44.4%** | 55.6% | 55.6% | 100.0% |
 | Usability & Accessibility Testing | 28 | 11 → 19 | 5 | 4 | 17 | 6 | 0 | 0 | 5 | 39.3% → **67.9%** | 82.1% | 60.7% | 73.9% |
 | Compatibility Testing | 15 | 5 → 12 | 1 | 2 | 9 | 1 | 0 | 2 | 3 | 33.3% → **80.0%** | 66.7% | 60.0% | 90.0% |
-| **Total** | **382** | **119 → 211** | 77 | 94 | **219** | **58** | 0 | 53 | 52 | **31.2% → 55.2%** | **72.5%** | **57.3%** | **79.1%** |
+| **Total** | **382** | **119 → 211** | 77 | 94 | **223** | **54** | 0 | 53 | 52 | **31.2% → 55.2%** | **72.5%** | **58.4%** | **80.5%** |
 
 Regression: most scenarios are bug retests, which "fail" while the bug is still open — a
 low pass rate there means the bugs are not fixed yet, not that the suite is unstable.
@@ -81,7 +81,7 @@ low pass rate there means the bugs are not fixed yet, not that the suite is unst
 | BUG-03 | Major | Confirmed | Signer | Preview cannot show how all recipients will see the document. |
 | BUG-04 | Major | Confirmed | Prepare | Opening another document while one is open in the builder shows no warning. |
 | BUG-05 | Major | Confirmed | Prepare | Placeholder text set in the inspector is not shown on the editing canvas. |
-| BUG-06 | Major | Confirmed | Prepare | Document-name character-limit error has raw validator wording and is not shown in the error colour. |
+| BUG-06 | Major | Resolved (retest passed) | Prepare | Document-name character-limit error has raw validator wording and is not shown in the error colour. |
 | BUG-08 | Major | Confirmed | Workflow | Missing recipient e-mail is shown as an amber advisory instead of a blocking error. |
 | BUG-11 | Major | Confirmed | Support | Submitting an empty support ticket gives no validation feedback. |
 | BUG-17 | Major | Confirmed | Contacts | Saving a new contact without a name does nothing — no message, field not flagged. |
@@ -172,6 +172,8 @@ Gap list with priorities and recommended actions: `QA_Gap_Analysis.xlsx`.
 | Automatic run 2026-11-19 15-53-48 | 19 Nov 2026 15:53 UTC | chromium-account | 22 | 19 | 3 | 0 | `reports-archive/2026-11-19T15-53-48-972Z_auto` |
 | Automatic run 2026-11-19 16-01-44 | 19 Nov 2026 16:01 UTC | firefox, mobile-chrome, webkit | 123 | 119 | 4 | 0 | `reports-archive/2026-11-19T16-01-44-201Z_auto` |
 | Automatic run 2026-11-19 16-09-34 | 19 Nov 2026 16:09 UTC | chromium-account | 2 | 1 | 1 | 0 | `reports-archive/2026-11-19T16-09-34-676Z_auto` |
+| Automatic run 2026-11-19 16-47-04 | 19 Nov 2026 16:47 UTC | chromium, chromium-builder, webkit | 4 | 2 | 2 | 0 | `reports-archive/2026-11-19T16-47-04-669Z_auto` |
+| Automatic run 2026-11-19 16-50-40 | 19 Nov 2026 16:50 UTC | chromium-builder | 4 | 4 | 0 | 0 | `reports-archive/2026-11-19T16-50-40-686Z_auto` |
 
 Reports regenerate automatically after every run (`reporters/qa-reports-reporter.ts`):
 the run is archived to `reports-archive/<run date>_auto/` and these files are rebuilt.

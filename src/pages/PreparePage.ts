@@ -1,4 +1,4 @@
-import { expect } from '@playwright/test';
+import { expect, type Locator } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { requireData } from '../helpers/precondition';
 
@@ -98,6 +98,15 @@ export class PreparePage extends BasePage {
     return n;
   }
 
+  /**
+   * Selects a placed field even when another field overlaps it. Placed fields stack, so a
+   * pointer click at the field's centre can land on (and select) the field on top; the
+   * events are dispatched to the element itself instead.
+   */
+  async selectFieldDirect(field: Locator): Promise<void> {
+    for (const type of ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click']) await field.dispatchEvent(type);
+  }
+
   async waitForCanvas(): Promise<void> {
     await this.documentLoading.waitFor({ state: 'hidden', timeout: 20_000 }).catch(() => undefined);
   }
@@ -108,7 +117,7 @@ export class PreparePage extends BasePage {
   async selectField(index: 'first' | 'last' = 'last') {
     await this.waitForCanvas();
     const field = index === 'first' ? this.placedFields.first() : this.placedFields.last();
-    await field.click();
+    await this.selectFieldDirect(field); /* fields overlap; a pointer click may hit another one */
     await expect(this.labelInput).toBeVisible();
     return field;
   }

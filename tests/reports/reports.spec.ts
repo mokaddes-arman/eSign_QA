@@ -41,8 +41,9 @@ test.describe('Reports & analytics @smoke', () => {
     }
   });
 
-  test('BUG-28 report section tabs still navigate after the period is changed', knownBug(KNOWN_BUGS.BUG28), async ({ reportsPage, page }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+  test('BUG-28 report section tabs still navigate after the period is changed', knownBug(KNOWN_BUGS.BUG28), async ({ reportsPage, page, browserName }) => {
+    /* WebKit-only defect: Chromium and Firefox navigate, so only WebKit is expected to fail. */
+    test.fail(expectBugsToFail && browserName === 'webkit', 'KNOWN_BUGS=expect-fail (BUG-28 is WebKit-only)');
     await reportsPage.selectRange('Last 12 months');
     /* One click per tab, generous wait: a working tab navigates in < 2 s. No retries here —
        the defect is precisely that the click is ignored. */

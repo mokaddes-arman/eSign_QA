@@ -26,7 +26,8 @@ test.describe('Flow · Prepare an envelope', () => {
 
     let draftUrl = '';
     let originalName = '';
-    let baseline = 0;
+    let baseline = 0; /* all fields when the test starts (for the +1 checks) */
+    let untouched = 0; /* fields the cleanup must leave: everything except Text Inputs */
 
     try {
       await test.step('open the newest draft', async () => {
@@ -35,7 +36,10 @@ test.describe('Flow · Prepare an envelope', () => {
         await preparePage.waitForCanvas();
         draftUrl = page.url();
         originalName = await preparePage.currentDocumentName();
+        /* Count only fields this test never touches: Text Inputs left by an earlier, interrupted
+           run are removed by the cleanup below as well. */
         baseline = await preparePage.fieldCount();
+        untouched = baseline - (await textInputs.count());
       });
 
       await test.step('find a field with palette search (UF-18)', async () => {
@@ -82,8 +86,9 @@ test.describe('Flow · Prepare an envelope', () => {
         await page.reload({ waitUntil: 'domcontentloaded' });
         await preparePage.waitForCanvas();
         await expect.poll(() => preparePage.fieldCount(), { timeout: 15_000 }).toBe(baseline + 1);
-        await theField().click();
-        await expect(preparePage.labelInput).toHaveValue(label);
+        /* Fields overlap: select ours directly (a pointer click may hit a Signature on top). */
+        await preparePage.selectFieldDirect(theField());
+        await expect(preparePage.labelInput, 'Our Text Input was not selected after reload').toHaveValue(label);
         await expect.soft(preparePage.placeholderInput).toHaveValue(placeholder);
       });
 
@@ -140,11 +145,18 @@ test.describe('Flow · Prepare an envelope', () => {
           await expect(preparePage.placedFields).toHaveCount(counter, { timeout: 15_000 });
         }
         for (let guard = 0; guard < 5 && (await textInputs.count()) > 0; guard++) {
-          await textInputs.last().click();
+          /* Fields overlap (a Signature may sit on top), so select the Text Input directly and
+             confirm the inspector shows a Text Input before deleting — never delete the wrong field. */
+          await preparePage.selectFieldDirect(textInputs.last());
+          await expect(
+            page.getByRole('heading', { name: 'Text Input', exact: true }),
+            'Cleanup refused to delete: the selected field is not the Text Input this test created',
+          ).toBeVisible({ timeout: 10_000 });
           await page.getByRole('button', { name: 'Delete', exact: true }).click();
           await page.waitForTimeout(1_500); // let the debounced save land
         }
-        if (baseline) await expect.poll(() => preparePage.fieldCount(), { timeout: 10_000 }).toBe(baseline);
+        await expect(textInputs, 'Cleanup left a Text Input on the shared draft').toHaveCount(0, { timeout: 10_000 });
+        if (baseline) await expect.poll(() => preparePage.fieldCount(), { timeout: 10_000 }).toBe(untouched);
       });
     }
   });
