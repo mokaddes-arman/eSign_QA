@@ -168,8 +168,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright browser
-        run: npx playwright install --with-deps ${{ matrix.browser }}
+      # Chromium too: scripts/refresh-auth.ts signs in with Chromium whatever the matrix
+      # browser. Without it the refresh crashed, the stale session (already superseded by
+      # the Chromium job's sign-in) was used, and every authenticated smoke test failed.
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium ${{ matrix.browser }}
 
       - name: Restore authenticated session
         env:
@@ -182,8 +185,13 @@ jobs:
             echo "::warning title=Missing session::AUTH_STORAGE_STATE_B64 is not set."
           fi
 
+      # Fail fast: without a live session every authenticated test fails anyway.
       - name: Refresh session (trusted device, no OTP)
-        run: npx tsx scripts/refresh-auth.ts || echo "::warning title=Session::refresh failed"
+        run: |
+          npx tsx scripts/refresh-auth.ts || {
+            echo "::error title=Session::Session refresh failed — authenticated tests cannot run. If OTP is required, run 'npm run auth:save' locally and update AUTH_STORAGE_STATE_B64."
+            exit 1
+          }
 
       - name: Smoke suite
         run: npx playwright test --project=${{ matrix.browser }} --grep @smoke --grep-invert "@data|@bug"
