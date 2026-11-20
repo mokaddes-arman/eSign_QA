@@ -32,17 +32,17 @@ test.describe('Flow · Personalise the shell', () => {
     }
   });
 
-  test('UF-11 NAV-007 collapsed sidebar stays collapsed after reload @flow', async ({ overviewPage, page }) => {
+  test('UF-11 NAV-007 sidebar collapsed/expanded state survives a reload @flow', async ({ overviewPage, page }) => {
     await overviewPage.goto();
     const expand = page.getByRole('button', { name: 'Expand sidebar' });
     const collapse = page.getByRole('button', { name: 'Collapse sidebar' });
-    test.skip(!(await collapse.isVisible()), 'Sidebar starts collapsed in this browser');
-
-    await clickUntilVisible(collapse, expand);
-    await page.reload({ waitUntil: 'domcontentloaded' });
-    await expect(expand, 'sidebar fold was lost on reload').toBeVisible();
-    await clickUntilVisible(expand, collapse);
-    await page.reload({ waitUntil: 'domcontentloaded' });
-    await expect(collapse, 'expanded sidebar was lost on reload').toBeVisible();
+    /* Flip from whichever state it starts in, check both states survive a reload, end where it began. */
+    const startCollapsed = await expand.isVisible();
+    const order = startCollapsed ? [[expand, collapse], [collapse, expand]] : [[collapse, expand], [expand, collapse]];
+    for (const [trigger, shown] of order) {
+      await clickUntilVisible(trigger, shown);
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await expect(shown, 'sidebar state was lost on reload').toBeVisible();
+    }
   });
 });

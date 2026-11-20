@@ -3,6 +3,7 @@ import { test, expect } from '../../src/fixtures/test';
 import { API } from '../../src/helpers/api';
 import { KNOWN_BUGS, UNIQUENESS_FOLDER, bugCheckpoint, expectBugsToFail, knownBug } from '../../src/helpers/bugs';
 import { clickUntilVisible, waitForHydration } from '../../src/helpers/wait';
+import { requireData } from '../../src/helpers/precondition';
 
 /**
  * UF-14 / UF-15 — organise the library and use every row action, on a COPY of the newest
@@ -53,7 +54,7 @@ async function erase(page: Page, id: string) {
 async function duplicateNewestDraft(page: Page): Promise<string> {
   const live = (await listDocs(page)).filter((d) => !d.is_template && !d.deleted_at && !d.archived_at);
   const source = live.sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
-  test.skip(!source, 'No document to duplicate');
+  requireData(source, 'the workspace has no live document to duplicate');
   const before = new Set(live.map((d) => d.id));
   await rowAction(page, '', source.id, 'Duplicate');
   let copy: Doc | undefined;
@@ -142,14 +143,25 @@ test.describe('Flow · Library lifecycle @data', () => {
 
   test('BUG-30 Trash offers Restore', knownBug(KNOWN_BUGS.BUG30), async ({ page, documentsPage }) => {
     test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
-    /* Read-only: inspects the menu and bulk bar of a document already in Trash. */
+    /* Inspects a document already in Trash; if Trash is empty, trashes a copy first (erased after). */
     await page.goto('/documents?folder=trash');
     await waitForHydration(page);
-    const row = documentsPage.rows.first();
-    test.skip((await row.count()) === 0, 'Trash is empty');
-    const menu = page.getByRole('menu');
-    await clickUntilVisible(row.getByRole('button', { name: 'More actions' }), menu);
-    await expect(menu.getByRole('menuitem', { name: /^Restore/ }), 'Trash row menu has no Restore').toHaveCount(1, { timeout: 5_000 });
+    let copy = '';
+    if ((await documentsPage.rows.count()) === 0) {
+      copy = await duplicateNewestDraft(page);
+      await rowAction(page, '', copy, 'Delete', 'Move to Trash');
+      await page.goto('/documents?folder=trash');
+      await waitForHydration(page);
+    }
+    try {
+      const row = documentsPage.rows.first();
+      const menu = page.getByRole('menu');
+      await clickUntilVisible(row.getByRole('button', { name: 'More actions' }), menu);
+      await expect(menu.getByRole('menuitem', { name: /^Restore/ }), 'Trash row menu has no Restore').toHaveCount(1, { timeout: 5_000 });
+    } finally {
+      await page.keyboard.press('Escape').catch(() => undefined);
+      if (copy) await erase(page, copy);
+    }
   });
 
   test('BUG-32 DOC-008 a duplicate folder name is rejected', knownBug(KNOWN_BUGS.BUG32, ['@data']), async ({ page, documentsPage }) => {

@@ -38,7 +38,7 @@ test.describe('Flow · Billing', () => {
     await billingPage.goto();
     const field = billingPage.billingEmailInput;
     const original = (await field.inputValue()).toLowerCase();
-    test.skip(![email, alias].includes(original) && original !== '', `Billing e-mail is set to another address (${original}); not touching it`);
+    /* Whatever was there is restored at the end (a cleared field is not saved, so '' → the account e-mail). */
     const next = original === alias ? email : alias;
     const save = async (value: string) => {
       await field.fill(value);

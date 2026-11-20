@@ -55,9 +55,9 @@ test.describe('Overview dashboard @smoke', () => {
     const summary = page.getByRole('region', { name: 'Workspace summary', exact: true });
     await expect(summary).toContainText(/renews/);
     const count = Number((await summary.innerText()).match(/(\d+) items? needs? your attention/)?.[1] ?? 0);
-    test.skip(count === 0, 'No attention items in this workspace');
     const items = overviewPage.attentionList.getByRole('listitem');
     await expect(items).toHaveCount(count);
+    if (count === 0) return; /* nothing to open: the empty list matching the headline is the check */
     await expect(async () => {
       if (/\/overview/.test(page.url())) await items.first().getByRole('button').click();
       await expect(page).not.toHaveURL(/\/overview/, { timeout: 5_000 });

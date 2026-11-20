@@ -86,14 +86,17 @@ test.describe('Authenticated navigation', () => {
     await expect(dialog.getByRole('combobox', { name: 'Search' })).toBeVisible();
   });
 
-  test('NF-010 a dropped connection does not end the session', async ({ contactsPage, page, context, browserName }) => {
-    /* Offline emulation differs per engine (WebKit: internal error; Firefox: navigation left pending). */
-    test.skip(browserName !== 'chromium', 'Offline emulation is reliable on Chromium only');
+  test('NF-010 a dropped connection does not end the session', async ({ contactsPage, page, context }) => {
     await contactsPage.goto();
     await context.setOffline(true);
-    await expect(page.reload()).rejects.toThrow(/ERR_INTERNET_DISCONNECTED/);
+    /* Each engine reports the offline reload differently (Chromium ERR_INTERNET_DISCONNECTED,
+       WebKit "internal error", Firefox may leave it pending) — only the recovery is asserted. */
+    await page.reload({ timeout: 10_000 }).catch(() => undefined);
     await context.setOffline(false);
-    await contactsPage.goto();
+    /* Firefox resumes the pending reload once online, which can interrupt the next goto: retry. */
+    await expect(async () => {
+      await contactsPage.goto();
+    }).toPass({ timeout: 60_000 });
     await expect(page).toHaveURL(/\/contacts/);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     test.info().annotations.push({ type: 'observation', description: 'Offline navigation shows the browser error page; the app has no offline notice of its own.' });

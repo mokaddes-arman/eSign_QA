@@ -234,7 +234,7 @@ export const KNOWN_BUGS = {
   BUG34: {
     id: 'BUG-34',
     severity: 'S1',
-    summary: 'Every envelope PDF fails to load: /api/proxy/documents/{id}/pdf returns 500, so the builder canvas and the signer view show "Document unavailable"',
+    summary: 'Envelopes created before the 20 Nov deploy cannot load their PDF: /api/proxy/documents/{id}/pdf returns 500, so the builder canvas and the signer view show "Document unavailable" (new uploads work)',
     expected: 'The envelope PDF loads in the builder and the signer view',
     caseId: 'PREP-002',
   },

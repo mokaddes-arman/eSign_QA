@@ -85,8 +85,9 @@ test.describe('Flow · Account profile', () => {
     await profilePage.goto();
     const region = page.getByRole('region', { name: 'Signatures' });
     await expect(region).toBeVisible();
-    /* Never touch a signature the account owner adopted. */
-    test.skip(!(await region.getByText('No signature adopted yet').isVisible()), 'Account already has a signature');
+    /* Existing signatures are left alone: the test removes only the one it adopts (the newest, made Default). */
+    const removeButtons = region.getByRole('button', { name: 'Remove' });
+    const before = await removeButtons.count();
     const dialog = page.getByRole('dialog', { name: 'Adopt your signature' });
     try {
       await clickUntilVisible(region.getByRole('button', { name: 'Add signature' }), dialog);
@@ -95,16 +96,20 @@ test.describe('Flow · Account profile', () => {
       await dialog.getByRole('button', { name: 'Adopt signature' }).click();
       await expect(dialog).toBeHidden();
       await page.reload({ waitUntil: 'domcontentloaded' });
-      await expect(region.getByText(/Typed · adopted/)).toBeVisible({ timeout: 20_000 });
+      await expect(removeButtons).toHaveCount(before + 1, { timeout: 20_000 });
+      await expect(region.getByText(/Typed · adopted/).first()).toBeVisible();
       await expect(region.getByText('Default', { exact: true })).toBeVisible();
     } finally {
-      /* Only the signature this test adopted exists (the test skips otherwise). */
-      const confirm = page.getByRole('dialog', { name: 'Remove this signature?' });
-      if (await region.getByRole('button', { name: 'Remove' }).isVisible().catch(() => false)) {
-        await clickUntilVisible(region.getByRole('button', { name: 'Remove' }), confirm);
+      if ((await removeButtons.count()) > before) {
+        /* A newly adopted signature becomes the Default: remove that entry. */
+        const confirm = page.getByRole('dialog', { name: 'Remove this signature?' });
+        const ownRemove = region.getByText('Default', { exact: true })
+          .locator('xpath=ancestor::*[.//button[normalize-space()="Remove"]][1]')
+          .getByRole('button', { name: 'Remove' });
+        await clickUntilVisible(ownRemove, confirm);
         await confirm.getByRole('button', { name: 'Remove', exact: true }).click();
+        await expect(removeButtons).toHaveCount(before, { timeout: 20_000 });
       }
-      await expect(region.getByText('No signature adopted yet')).toBeVisible({ timeout: 20_000 });
     }
   });
 });

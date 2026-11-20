@@ -269,7 +269,7 @@ BUGS += [
      "description": "Every envelope PDF fails to load: GET /api/proxy/documents/{id}/pdf returns 500 for all six drafts, so the builder shows no page or fields and the signer view shows 'DOCUMENT UNAVAILABLE - Document request failed: Download failed (500)'. Nothing can be prepared or signed.",
      "steps": "1. Open any draft in the builder (/documents/{id}/prepare) or its signer preview.\n2. Watch the network: /api/proxy/documents/{id}/pdf.",
      "expected": "The PDF loads (200, application/pdf); fields render on the page.",
-     "actual": "500 text/plain for all 6 documents (each has its own documents/{id}/original.pdf). Signer view: 'The document could not be displayed'. Builder: counter says 7 fields but none on the canvas.",
+     "actual": "500 text/plain 'Internal Server Error' (an unhandled server exception) for all 6 documents created before the deploy, each with its own documents/{id}/original.pdf. A document uploaded after the deploy (20 Nov 17:3x UTC) loads fine (200 application/pdf), so stored originals from before the deploy are missing or unreadable. Signer view: 'The document could not be displayed'. Builder: counter says 7 fields but none on the canvas.",
      "environment": ENV_CHROMIUM + " (Team plan)", "found": "CI run 20 Nov 2026 15:44 UTC (passed 20 Nov 02:47 UTC)",
      "remarks": "Started with the 20 Nov deploy that removed the Developer platform, 'Notarize' and reminder cadence. Builder/signer tests fail with 'BUG-34 - the envelope PDF did not load'."},
 ]

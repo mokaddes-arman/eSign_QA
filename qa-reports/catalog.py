@@ -251,7 +251,7 @@ BIL-010|FUNC|Billing|Invoice / PO option|Form shown|N||
 BIL-012|FUNC|Billing|Change-plan preview prorates the price difference over the rest of the period|Prorated today = (new - current price) x remaining / period|I|billing/payments.spec.*BIL-012|New 18 Nov (black-box counterpart of UNIT-005).
 BIL-011|FUNC|Billing|Billing API outage handling|Banner + Retry|M||Needs fault injection (could use page.route in a future test).
 NF-007|FUNC|Platform|404 route when signed in|"That page isn't here"|I|navigation/navigation.spec.*unknown routes return the 404|
-NF-010|FUNC|Platform|Error/offline state|Friendly error; retry|P|navigation/navigation.spec.*NF-010|Session survives a dropped connection (Chromium). Offline navigation shows the browser error page — no in-app offline notice (observation).
+NF-010|FUNC|Platform|Error/offline state|Friendly error; retry|P|navigation/navigation.spec.*NF-010|Session survives a dropped connection (every browser). Offline navigation shows the browser error page — no in-app offline notice (observation).
 UF-01|E2E|Guest|Discover → choose a plan|Plan kept on /register|I|flows/guest.flow.*UF-01|
 UF-02|E2E|Guest|Sign up → verify → first visit|Overview greets new workspace|P|auth/signup.spec.*creates a workspace|Signup to the OTP page is automated; OTP entry needs a mailbox (GMAIL_* empty).
 UF-03|E2E|Guest|Sign in|Trusted device skips OTP|I|flows/guest.flow.*UF-05|Trusted-device sign-in, no OTP.

@@ -1,4 +1,5 @@
 import { test, expect } from '../../src/fixtures/test';
+import { requireData } from '../../src/helpers/precondition';
 
 test.describe('Billing & plan @smoke', () => {
   test.beforeEach(async ({ billingPage }) => {
@@ -38,7 +39,7 @@ test.describe('Billing & plan @smoke', () => {
     const list = page.getByRole('region', { name: /· \d+ invoices?$/ });
     await expect(list).toBeVisible({ timeout: 30_000 });
     const count = Number((await list.getByRole('heading', { level: 2 }).innerText()).match(/(\d+) invoices?/)![1]);
-    test.skip(count === 0, 'No invoice issued yet');
+    requireData(count > 0, 'the workspace has no issued invoice');
     const rows = list.getByRole('region', { name: 'Invoices', exact: true }).getByRole('row').filter({ has: page.getByRole('button') });
     await expect(rows).toHaveCount(count);
     await expect(list.getByRole('group', { name: 'Filter invoices by status' }).getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
