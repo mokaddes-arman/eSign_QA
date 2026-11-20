@@ -30,7 +30,7 @@ RUNS = [
 # unreachable or the API timing out), not an application or automation defect → "Blocked".
 ENV_ERROR = r"Test timeout of \d+ms exceeded|Page crashed|Target crashed|ERR_CONNECTION|ERR_TIMED_OUT|ECONNRESET|socket hang up|hCaptcha challenge|net::ERR|page\.goto: Timeout|reach the eSignPro API|reason=superseded"
 
-_BUG_IDS = [f"BUG-{i:02d}" for i in range(1, 34)]
+_BUG_IDS = [f"BUG-{i:02d}" for i in range(1, 35)]
 FAILURES = {
     # Known-bug reproductions: the test asserts the correct behaviour and fails while the bug exists.
     **{rf"\b{b}\b": {"class": "Application defect", "bug": b, "note": "Reproduction test still fails — defect open."} for b in _BUG_IDS},
@@ -265,6 +265,13 @@ BUGS += [
      "expected": 'Twelve consecutive ISO weeks ending with the latest week (W35 ... W46).',
      "actual": 'W34, W35, W36, W38, W39, W40, W41, W42, W43, W44, W45, W46.',
      "environment": ENV_CHROMIUM + " (Team plan)", "found": "Coverage-gap tests 20 Nov 2026", "remarks": 'Reproduction: tests/overview/overview.spec.ts (BUG-33, read-only). Likely a week-numbering error in the bucket labels.'},
+    {"id": "BUG-34", "module": "Prepare", "category": "Functional", "severity": "Blocker", "priority": "Critical", "new": True, "status": "New",
+     "description": "Every envelope PDF fails to load: GET /api/proxy/documents/{id}/pdf returns 500 for all six drafts, so the builder shows no page or fields and the signer view shows 'DOCUMENT UNAVAILABLE - Document request failed: Download failed (500)'. Nothing can be prepared or signed.",
+     "steps": "1. Open any draft in the builder (/documents/{id}/prepare) or its signer preview.\n2. Watch the network: /api/proxy/documents/{id}/pdf.",
+     "expected": "The PDF loads (200, application/pdf); fields render on the page.",
+     "actual": "500 text/plain for all 6 documents (each has its own documents/{id}/original.pdf). Signer view: 'The document could not be displayed'. Builder: counter says 7 fields but none on the canvas.",
+     "environment": ENV_CHROMIUM + " (Team plan)", "found": "CI run 20 Nov 2026 15:44 UTC (passed 20 Nov 02:47 UTC)",
+     "remarks": "Started with the 20 Nov deploy that removed the Developer platform, 'Notarize' and reminder cadence. Builder/signer tests fail with 'BUG-34 - the envelope PDF did not load'."},
 ]
 
 INITIAL_IMPL = {

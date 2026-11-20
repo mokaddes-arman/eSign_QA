@@ -37,5 +37,12 @@ export class SignerPreviewPage extends BasePage {
       { waitUntil: 'domcontentloaded' },
     );
     await expect(this.heading).toBeVisible();
+    await this.waitForDocument();
+  }
+
+  /** Waits until the PDF and its fields render; fails with the cause if the PDF did not load (BUG-34). */
+  async waitForDocument(): Promise<void> {
+    await expect(this.signerFields.first().or(this.page.getByText(/Document request failed/)).first()).toBeVisible({ timeout: 20_000 }).catch(() => undefined);
+    await this.assertDocumentAvailable();
   }
 }

@@ -1,4 +1,5 @@
 import { test, expect } from '../../src/fixtures/test';
+import { optionLabels } from '../../src/helpers/ui';
 
 test.describe('Contacts address book', () => {
   test.beforeEach(async ({ contactsPage }) => {
@@ -24,7 +25,7 @@ test.describe('Contacts address book', () => {
     await expect(contactsPage.roleSelect).toBeVisible();
     await expect(contactsPage.groupSelect).toBeVisible();
 
-    const roles = await contactsPage.roleSelect.locator('option').allTextContents();
+    const roles = await optionLabels(contactsPage.roleSelect);
     expect(roles).toEqual(
       expect.arrayContaining(['Needs to sign', 'Approver', 'Receives a copy', 'In-person signer']),
     );

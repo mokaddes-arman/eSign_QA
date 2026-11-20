@@ -180,6 +180,9 @@ def verdict_for(t):
         return {"class": "Test data", "bug": "", "note": first_line(t.get("error"))}
     if re.search(triage.ENV_ERROR, first_line(t.get("error")) or ""):
         return {"class": "Environment", "bug": "", "note": "Live site unreachable / API timeout during the run (environment, not a product defect)."}
+    named = re.match(r"(?:Error: )?(BUG-\d+) — ", first_line(t.get("error")) or "")
+    if named:  # page objects fail with "BUG-nn — …" when a known defect blocks the page
+        return {"class": "Application defect", "bug": named.group(1), "note": first_line(t.get("error"))}
     for pattern, v in triage.FAILURES.items():
         if re.search(pattern, t["key"]):
             return v

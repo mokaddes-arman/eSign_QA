@@ -61,7 +61,9 @@ test.describe('Security · access control @security', () => {
       const response = await request.get(url, { maxRedirects: 0 });
       expect([302, 303, 307, 401, 403]).toContain(response.status());
       if (response.status() >= 300 && response.status() < 400) {
-        expect(response.headers()['location']).toMatch(/^\/login\?next=/);
+        /* Relative or absolute, but always this site's own login page (no open redirect). */
+        const origin = new URL(env.baseUrl).origin.replace(/[.]/g, '\\.');
+        expect(response.headers()['location']).toMatch(new RegExp(`^(${origin})?/login\\?next=`));
       }
       expect(await response.text(), 'no JSON payload leaked').not.toMatch(/"(id|email|organization_id)"\s*:/);
     });

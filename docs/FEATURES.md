@@ -94,7 +94,7 @@ created.
 | DOC-10 | Empty states per folder/filter. |
 | DOC-11 | **Layout toggle** — List / Grid. |
 | DOC-12 | **Bulk selection** — Select all / per-row checkboxes. |
-| DOC-13 | **Row "More actions" menu** — Open, Copy link (disabled for drafts), Add fields, Make template, Notarize, Download, Print, Move to folder, Duplicate, Rename, Archive, Delete. |
+| DOC-13 | **Row "More actions" menu** — Open, Copy link (disabled for drafts), Add fields, Make template, Download, Print, Move to folder, Duplicate, Rename, Archive, Delete. |
 | DOC-14 | Unknown/foreign document ID → "This document isn't available" with Go to documents. |
 
 ---

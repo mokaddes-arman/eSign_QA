@@ -1,6 +1,7 @@
 import type { Download } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { test, expect } from '../../src/fixtures/test';
+import { optionLabels } from '../../src/helpers/ui';
 import { KNOWN_BUGS, expectBugsToFail, knownBug } from '../../src/helpers/bugs';
 
 test.describe('Reports & analytics @smoke', () => {
@@ -13,7 +14,7 @@ test.describe('Reports & analytics @smoke', () => {
     await expect(reportsPage.analyticsHeading).toBeVisible();
     await expect(reportsPage.exportButton).toBeVisible();
 
-    const ranges = await reportsPage.dateRangeSelect.locator('option').allTextContents();
+    const ranges = await optionLabels(reportsPage.dateRangeSelect);
     expect(ranges).toEqual(
       expect.arrayContaining([
         'Last 7 days',

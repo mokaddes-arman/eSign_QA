@@ -1,4 +1,5 @@
-import { expect, type Locator, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expectBugsToFail } from '../helpers/bugs';
 import { waitForHydration } from '../helpers/wait';
 import { heal } from '../helpers/selfHeal';
 
@@ -60,6 +61,23 @@ export abstract class BasePage {
           'Run "npm run auth:refresh" and avoid parallel runs against the same account.',
       );
     }
+  }
+
+  /**
+   * The builder / signer view could not load the envelope's PDF ("DOCUMENT UNAVAILABLE ·
+   * Document request failed: Download failed (500)"). Fail with that cause (BUG-34) instead
+   * of a misleading "field not found" further down. Under KNOWN_BUGS=expect-fail (CI) the
+   * blocked test is skipped with a BUG-34 annotation instead, like other open known bugs.
+   */
+  async assertDocumentAvailable(): Promise<void> {
+    const failure = this.page.getByText(/Document request failed: .*/).first();
+    if (!(await failure.isVisible().catch(() => false))) return;
+    const message = `BUG-34 — the envelope PDF did not load: "${(await failure.innerText()).split('\n')[0]}". Every field check on this page is blocked.`;
+    if (expectBugsToFail) {
+      test.info().annotations.push({ type: 'blocked-by-bug', description: message });
+      test.skip(true, message);
+    }
+    throw new Error(message);
   }
 
   /** Banner the app renders when a backend call times out ("Can't reach the eSignPro API"). */

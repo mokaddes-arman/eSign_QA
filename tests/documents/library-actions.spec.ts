@@ -19,7 +19,7 @@ test.describe('Documents library actions', () => {
       'Copy link',
       'Add fields',
       'Make template',
-      'Notarize',
+      /* 'Notarize' was removed from the product (20 Nov 2026). */
       'Download',
       'Print',
       'Move to folder',

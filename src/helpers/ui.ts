@@ -6,6 +6,15 @@ import { expect, type Locator, type Page, type TestInfo } from '@playwright/test
  * (unreadable text, errors in the wrong colour, unlabeled controls).
  */
 
+/**
+ * Labels of a <select>'s options, read in one evaluate() on the select itself.
+ * Querying the <option> elements through a locator (allTextContents / allInnerTexts)
+ * crashes the Firefox tab on this app (TEST_PLAN R19).
+ */
+export async function optionLabels(select: Locator): Promise<string[]> {
+  return select.evaluate((el) => [...(el as HTMLSelectElement).options].map((o) => o.text.trim()));
+}
+
 export type RGBA = { r: number; g: number; b: number; a: number };
 
 export function parseColor(value: string): RGBA {

@@ -1,4 +1,5 @@
 import { test, expect } from '../../src/fixtures/test';
+import { optionLabels } from '../../src/helpers/ui';
 
 /**
  * Inspector, recipient manager and workflow option inventories on the newest
@@ -27,11 +28,11 @@ test.describe('Builder details', () => {
     await expect(page.getByRole('switch', { name: 'Required' })).toBeVisible();
     await expect(page.getByRole('switch', { name: 'Read-only' })).toBeVisible();
 
-    const rules = await page.getByLabel('Validation').locator('option').allTextContents();
+    const rules = await optionLabels(page.getByLabel('Validation'));
     expect(rules).toEqual(
       expect.arrayContaining(['None', 'Email', 'Date (MM/DD/YYYY)', 'Numeric', 'Custom regex']),
     );
-    const operators = await page.getByLabel('Operator').locator('option').allTextContents();
+    const operators = await optionLabels(page.getByLabel('Operator'));
     expect(operators).toEqual(expect.arrayContaining(['is checked', 'equals', 'is not empty']));
   });
 
@@ -39,7 +40,7 @@ test.describe('Builder details', () => {
     await preparePage.manageRecipientsButton.click();
     const dialog = page.getByRole('dialog');
     await expect(dialog.getByRole('button', { name: 'Add from contacts' }).first()).toBeVisible();
-    const roles = await dialog.getByLabel(/Recipient \d+ role/).first().locator('option').allTextContents();
+    const roles = await optionLabels(dialog.getByLabel(/Recipient \d+ role/).first());
     expect(roles).toEqual(
       expect.arrayContaining(['Signer', 'In-person signer', 'Approver', 'Receives a copy']),
     );
@@ -58,16 +59,11 @@ test.describe('Builder details', () => {
     }
   });
 
-  test('workflow offers reminder cadence, expiry and payment split options', async ({
-    preparePage,
-    page,
-  }) => {
+  test('workflow offers expiry and payment split options', async ({ preparePage, page }) => {
     await preparePage.goToWorkflow();
-    const cadence = page.getByRole('group', { name: 'Reminder cadence' });
-    for (const option of ['Every 24h', 'Every 48h', 'Every 7 days', 'No reminders']) {
-      await expect(cadence.getByRole('button', { name: option })).toBeVisible();
-    }
-    const expiry = await page.getByLabel('Expires').locator('option').allTextContents();
+    /* Reminder cadence was removed from the workflow step (20 Nov 2026). */
+    await expect(page.getByRole('group', { name: 'Reminder cadence' })).toHaveCount(0);
+    const expiry = await optionLabels(page.getByLabel('Expires'));
     expect(expiry).toEqual(
       expect.arrayContaining(['After 7 days', 'After 14 days', 'After 30 days', 'After 90 days', 'On a date…']),
     );

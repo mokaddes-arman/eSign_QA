@@ -231,6 +231,13 @@ export const KNOWN_BUGS = {
     expected: 'Twelve consecutive ISO weeks ending with the latest week',
     caseId: 'OVR-003',
   },
+  BUG34: {
+    id: 'BUG-34',
+    severity: 'S1',
+    summary: 'Every envelope PDF fails to load: /api/proxy/documents/{id}/pdf returns 500, so the builder canvas and the signer view show "Document unavailable"',
+    expected: 'The envelope PDF loads in the builder and the signer view',
+    caseId: 'PREP-002',
+  },
 } as const satisfies Record<string, KnownBug>;
 
 /** Fixed folder used by the duplicate-name check, so runs do not create a new name each time. */

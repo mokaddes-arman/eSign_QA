@@ -1,4 +1,5 @@
 import { test, expect } from '../../src/fixtures/test';
+import { optionLabels } from '../../src/helpers/ui';
 
 test.describe('Support queue controls', () => {
   test('search, sort, export and status chips are available', async ({ supportPage, page }) => {
@@ -6,7 +7,7 @@ test.describe('Support queue controls', () => {
     await expect(page.getByRole('searchbox', { name: 'Search tickets' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Export CSV' })).toBeVisible();
 
-    const sorts = await supportPage.sortFilter.locator('option').allTextContents();
+    const sorts = await optionLabels(supportPage.sortFilter);
     expect(sorts).toEqual(
       expect.arrayContaining(['SLA risk', 'Recently updated', 'Newest first', 'Oldest first', 'Priority']),
     );

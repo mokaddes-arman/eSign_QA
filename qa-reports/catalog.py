@@ -172,7 +172,7 @@ WF-002|FUNC|Workflow|Sequential vs parallel routing|Exactly one mode pressed; pe
 WF-003|FUNC|Workflow|Invite preview updates live|Preview reflects subject|I|ui/workflow.ui.spec.*invite preview reflects the subject|
 WF-004|FUNC|Workflow|Payment request|Saved with payment field|B|documents/builder-details.spec.*payment split options|Blocked without Stripe Connect; options only.
 WF-005|FUNC|Workflow|Before-you-send checklist|Pending items flagged|P|ui/workflow.ui.spec.*before-you-send checklist|Icons only.
-WF-006|FUNC|Workflow|Reminders & expiration persist|Persist after reload|P|documents/builder-details.spec.*reminder cadence, expiry|Options only.
+WF-006|FUNC|Workflow|Expiration options (reminder cadence removed 20 Nov 2026)|Expiry options offered; no reminder cadence|P|documents/builder-details.spec.*expiry and payment split|Options only; persistence not asserted.
 WF-007|FUNC|Workflow|Branding theme|Preview reflects theme|B||Branding not on Free plan.
 WF-008|FUNC|Workflow|Delivery simulation|Timeline shown|P|documents/prepare.spec.*moves to the workflow step|Section presence.
 WF-009|FUNC|Workflow|Send blocked without recipient/fields|Blocked; nothing sent|N||Safe to automate only if the block is certain; risk of sending.

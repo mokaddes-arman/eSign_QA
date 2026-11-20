@@ -1,4 +1,5 @@
 import { test, expect } from '../../src/fixtures/test';
+import { optionLabels } from '../../src/helpers/ui';
 
 test.describe('Support tickets', () => {
   test.beforeEach(async ({ supportPage }) => {
@@ -18,7 +19,7 @@ test.describe('Support tickets', () => {
     await expect(supportPage.subjectInput).toBeVisible();
     await expect(supportPage.descriptionInput).toBeVisible();
 
-    const categories = await supportPage.categorySelect.locator('option').allTextContents();
+    const categories = await optionLabels(supportPage.categorySelect);
     expect(categories).toEqual(
       expect.arrayContaining([
         'Signing issue',
@@ -29,7 +30,7 @@ test.describe('Support tickets', () => {
       ]),
     );
 
-    const priorities = await supportPage.prioritySelect.locator('option').allTextContents();
+    const priorities = await optionLabels(supportPage.prioritySelect);
     expect(priorities).toEqual(
       expect.arrayContaining(['P1 · Urgent — signing blocked', 'P2 · High', 'P3 · Normal', 'P4 · Low']),
     );
@@ -55,6 +56,8 @@ test.describe('Support tickets', () => {
     expect(writes).toEqual([]);
     await expect(supportPage.dialog).toBeVisible();
     await supportPage.dialog.getByRole('button', { name: 'Cancel' }).click();
-    await expect(supportPage.emptyState).toBeVisible();
+    await expect(supportPage.dialog).toBeHidden();
+    /* Data-independent: the queue (or its empty state) is back, with nothing new in it. */
+    await expect(supportPage.table.or(supportPage.emptyState).first()).toBeVisible();
   });
 });

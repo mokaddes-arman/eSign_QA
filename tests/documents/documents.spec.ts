@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { test, expect } from '../../src/fixtures/test';
+import { optionLabels } from '../../src/helpers/ui';
 import { clickUntilVisible } from '../../src/helpers/wait';
 
 const SAMPLE_DOC = path.resolve(__dirname, '../fixtures/sample-agreement.png');
@@ -40,7 +41,7 @@ test.describe('Documents library @smoke', () => {
     await expect(documentsPage.timeFilter).toBeVisible();
     await expect(documentsPage.ownerFilter).toBeVisible();
 
-    const statuses = await documentsPage.statusFilter.locator('option').allTextContents();
+    const statuses = await optionLabels(documentsPage.statusFilter);
     expect(statuses).toEqual(
       expect.arrayContaining([
         'All statuses',
@@ -54,7 +55,7 @@ test.describe('Documents library @smoke', () => {
   });
 
   test('sorts the list by name and status', async ({ documentsPage }) => {
-    const options = await documentsPage.sortSelect.locator('option').allTextContents();
+    const options = await optionLabels(documentsPage.sortSelect);
     expect(options).toEqual(expect.arrayContaining(['Recent', 'Name', 'Status', 'Owner']));
 
     await documentsPage.selectSort('Name');

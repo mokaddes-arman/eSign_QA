@@ -87,7 +87,7 @@ session `auth/storageState.json`. Sample upload: `tests/fixtures/sample-agreemen
 | DOC-014 | Favourites / sharing views | P2 | Functional | Document exists | Favourite a document; share with team member | Appears under Favourites / Shared with me as appropriate | M |
 | DOC-015 | Empty state | P3 | UI | Filter with no matches | Apply impossible filter combo | Friendly empty state with clear-filters action; no errors | M |
 | DOC-016 | Pagination | P2 | Functional | > page-size documents | Navigate pages | Count "Showing X of Y"; page controls preserved with filters | M |
-| DOC-017 | Row actions menu | P1 | Functional | Document exists | Open **More actions** | Open, Copy link, Add fields, Make template, Notarize, Download, Print, Move to folder, Duplicate, Rename, Archive, Delete | ✔ `tests/documents/library-actions.spec.ts` |
+| DOC-017 | Row actions menu | P1 | Functional | Document exists | Open **More actions** | Open, Copy link, Add fields, Make template, ~~Notarize~~ (removed 20 Nov 2026), Notarize, Download, Print, Move to folder, Duplicate, Rename, Archive, Delete | ✔ `tests/documents/library-actions.spec.ts` |
 | DOC-018 | Row actions behaviour | P1 | Functional | Document exists | Duplicate, Rename, Move to folder, Download, Print | Each action applies and is reflected in list/audit | M |
 | DOC-019 | Layout & bulk selection | P3 | UI | Signed in | Toggle List/Grid; Select all | Layout switches; selection count/bulk bar appears | ✔ (controls) / M |
 | DOC-020 | Form catalog | P2 | Functional | Templates folder | Browse form catalog → search/category → add | Catalog dialog; adding copies form into Templates | ✔ (dialog) / M (add) |
@@ -143,7 +143,7 @@ session `auth/storageState.json`. Sample upload: `tests/fixtures/sample-agreemen
 | WF-003 | Invite preview | P2 | Functional | Recipient present | Edit subject/message | Preview updates live; merge tokens resolve to recipient/document values | ✔ (section) / M |
 | WF-004 | Payment request | P2 | Functional | Stripe connected | Enable payment, choose single/split/custom, save | Payment request saved; requires a placed payment field | ✔ (blocked without Stripe) / M |
 | WF-005 | Before-you-send checklist | P1 | Functional | Incomplete envelope | Inspect checklist | Each pending item (e-mail, fields, disclosure, certificate) flagged with deep link | ✔ (section) / M |
-| WF-006 | Reminders & expiration | P1 | Functional | Workflow open | Choose 24h/48h/7d/none + expiry | Selection persists after save/reload | ✔ (options) / M (persist) |
+| WF-006 | Expiration (reminder cadence removed 20 Nov 2026) | P1 | Functional | Workflow open | Choose 24h/48h/7d/none + expiry | Selection persists after save/reload | ✔ (options) / M (persist) |
 | WF-007 | Branding theme | P2 | Functional | Theme exists | Select theme | Invite preview reflects logo/colours | ✔ (section) / M |
 | WF-008 | Delivery simulation | P2 | Functional | Workflow open | Open simulation | Shows recipient delivery experience without sending | ✔ (section) / M |
 | WF-009 | Send blocked without recipient/fields | P0 | Negative | Draft without recipient | Send envelope | Blocked with actionable errors; nothing sent; quota unchanged | M |

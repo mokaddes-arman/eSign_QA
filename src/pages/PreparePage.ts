@@ -109,6 +109,7 @@ export class PreparePage extends BasePage {
 
   async waitForCanvas(): Promise<void> {
     await this.documentLoading.waitFor({ state: 'hidden', timeout: 20_000 }).catch(() => undefined);
+    await this.assertDocumentAvailable();
   }
 
   /** Recipient cards in the Recipients panel, e.g. "1 Recipient 1 Pending Needs to sign · 6 fields". */

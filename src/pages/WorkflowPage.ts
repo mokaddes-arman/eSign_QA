@@ -1,7 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 import { BasePage } from './BasePage';
 
-/** /documents/{id}/workflow — routing, reminders, branding and send step. */
+/** /documents/{id}/workflow — routing, expiration, branding and send step. */
 export class WorkflowPage extends BasePage {
   protected path = '/documents';
 
@@ -17,14 +17,14 @@ export class WorkflowPage extends BasePage {
   readonly messageInput = this.page.getByLabel(/^Message/);
   readonly invitePreview = this.page.getByRole('heading', { name: 'Invite preview' });
   readonly beforeYouSend = this.page.getByRole('heading', { name: 'Before you send' });
-  readonly reminders = this.page.getByRole('heading', { name: 'Reminders & expiration' });
+  /* "Reminders & expiration" became "Expiration" when reminder cadence was removed (20 Nov 2026). */
+  readonly expiration = this.page.getByRole('heading', { name: 'Expiration', exact: true });
   readonly branding = this.page.getByRole('heading', { name: 'Branding' });
   readonly deliverySimulation = this.page.getByRole('heading', { name: 'Delivery simulation' });
 
   readonly recipientsRegion = this.page.getByRole('region', { name: 'Recipients & signing order' });
   readonly beforeYouSendRegion = this.page.getByRole('region', { name: 'Before you send' });
   readonly invitePreviewGroup = this.page.getByRole('group', { name: 'Invitation email preview' });
-  readonly reminderCadence = this.page.getByRole('group', { name: 'Reminder cadence' });
   readonly expiresSelect = this.page.getByRole('combobox', { name: 'Expires' });
   readonly openBuilderLink = this.page.getByRole('link', { name: 'Open builder' });
   readonly prepareStepButton = this.page.getByRole('group', { name: 'Steps' }).getByRole('button', { name: 'Prepare' });

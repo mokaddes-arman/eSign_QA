@@ -74,7 +74,7 @@ test.describe('Envelope preparation builder', () => {
     await expect(workflowPage.parallelButton).toBeVisible();
     await expect(workflowPage.invitePreview).toBeVisible();
     await expect(workflowPage.beforeYouSend).toBeVisible();
-    await expect(workflowPage.reminders).toBeVisible();
+    await expect(workflowPage.expiration).toBeVisible();
     await expect(workflowPage.branding).toBeVisible();
     await expect(workflowPage.deliverySimulation).toBeVisible();
   });

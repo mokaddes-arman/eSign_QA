@@ -1,4 +1,5 @@
 import { test, expect } from '../../src/fixtures/test';
+import { optionLabels } from '../../src/helpers/ui';
 import { API } from '../../src/helpers/api';
 import { waitForHydration } from '../../src/helpers/wait';
 
@@ -10,7 +11,7 @@ test.describe('Account settings pages', () => {
 
     await expect(page.getByRole('heading', { level: 1, name: 'Notifications' })).toBeVisible();
     await expect(page.getByRole('searchbox', { name: 'Search notifications' })).toBeVisible();
-    const windows = await page.getByLabel('Time window').locator('option').allTextContents();
+    const windows = await optionLabels(page.getByLabel('Time window'));
     expect(windows).toEqual(
       expect.arrayContaining(['All time', 'Last 24 hours', 'Last 7 days', 'Last 30 days', 'Last 90 days']),
     );
@@ -90,7 +91,7 @@ test.describe('Account settings pages', () => {
     await waitForHydration(page);
 
     await expect(page.getByRole('button', { name: 'Connect Stripe' })).toBeVisible();
-    const types = await page.getByLabel('Business type').locator('option').allTextContents();
+    const types = await optionLabels(page.getByLabel('Business type'));
     expect(types).toEqual(
       expect.arrayContaining(['Company', 'Individual / sole proprietor', 'Non-profit', 'Government entity']),
     );

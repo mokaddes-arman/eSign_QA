@@ -27,6 +27,7 @@ test.describe('UI · Signer preview', () => {
   });
 
   test('mobile toggle narrows the document', async ({ signerPreviewPage }) => {
+    await signerPreviewPage.waitForDocument();
     const surface = signerPreviewPage.signerFields.first();
     await expect(surface).toBeVisible();
     const desktopX = (await surface.boundingBox())!.x;
