@@ -16,6 +16,7 @@
     "test:security": "playwright test --project=chromium --grep @security",
     "test:a11y": "playwright test --project=chromium --grep @a11y",
     "test:perf": "playwright test --project=chromium-account tests/performance",
+    "test:edge": "node -e \"process.exitCode=require('child_process').spawnSync('npx playwright test --project=edge --grep @smoke --workers=2',{stdio:'inherit',shell:true,env:{...process.env,PW_EDGE:'1'}}).status\"",
     "test:compat": "playwright test --project=chromium --grep @compat",
     "test:cross-browser": "playwright test --project=firefox --project=webkit --project=mobile-chrome --grep @smoke --workers=2",
     "test:ci": "playwright test --project=chromium --project=chromium-builder --grep-invert \"@data|@perf\"",

@@ -30,7 +30,7 @@ RUNS = [
 # unreachable or the API timing out), not an application or automation defect → "Blocked".
 ENV_ERROR = r"Test timeout of \d+ms exceeded|Page crashed|Target crashed|ERR_CONNECTION|ERR_TIMED_OUT|ECONNRESET|socket hang up|hCaptcha challenge|net::ERR|page\.goto: Timeout|reach the eSignPro API|reason=superseded"
 
-_BUG_IDS = [f"BUG-{i:02d}" for i in range(1, 29)]
+_BUG_IDS = [f"BUG-{i:02d}" for i in range(1, 34)]
 FAILURES = {
     # Known-bug reproductions: the test asserts the correct behaviour and fails while the bug exists.
     **{rf"\b{b}\b": {"class": "Application defect", "bug": b, "note": "Reproduction test still fails — defect open."} for b in _BUG_IDS},
@@ -40,6 +40,8 @@ FAILURES = {
                                      "note": "WebKit only: after the period changes, report section tabs ignore clicks."},
     r"UF-19 sender places": {"class": "Application defect", "bug": "BUG-05",
                              "note": "Flow checkpoint for the placeholder (BUG-05) — strict mode asserts it; CI skips it with KNOWN_BUGS=expect-fail."},
+    r"UF-14 UF-15 DOC-013": {"class": "Application defect", "bug": "BUG-29",
+                             "note": "Flow checkpoint: Archive view has no Unarchive (BUG-29) - strict mode asserts it; CI skips it."},
     r"PERF-00[12]": {"class": "Application defect", "bug": "BUG-24", "note": "Cold page load exceeds budget; static assets ~1–1.8 s TTFB each from origin."},
     # Automation defects found and fixed this cycle (kept so baseline failures are classified).
     r"notifications bell opens a popover|validates that a ticket cannot be submitted empty|change-password dialog is labelled|"
@@ -59,7 +61,7 @@ FAILURES = {
     r"notification preferences expose switch state": {"class": "Environment", "bug": "",
          "note": "Preferences load client-side after hydration; exceeded 10 s under backend latency. Hydration guard + 25 s timeout added; passes 3/3."},
     r"SESS-003": {"class": "Automation defect", "bug": "", "note": "Reload raced the app's own redirect to /login (ERR_ABORTED). Fixed; passes."},
-    r"group filters are offered|Payments fits a phone|Notifications centre stays readable|API overview|API keys fits|Contacts stays readable":
+    r"group filters are offered|Payments fits a phone|Notifications centre stays readable|Contacts stays readable":
         {"class": "Environment", "bug": "", "note": "page.goto timed out / connection timed out to the live site; passed on re-run."},
 }
 
@@ -159,7 +161,8 @@ BUGS = [
     {"id": "BUG-18", "module": "Developer", "category": "Functional", "severity": "Major", "priority": "Medium",
      "description": "Webhook 'Create endpoint' is enabled for a value that is not a URL.",
      "steps": "1. Developer → Webhooks → Add endpoint.\n2. Type 'not a url'.", "expected": "Create endpoint stays disabled.",
-     "actual": "Enabled (never submitted by the test).", "environment": ENV_CHROMIUM, "found": "UI layer 16 Nov 2026", "remarks": "DEV-014."},
+     "actual": "Enabled (never submitted by the test).", "environment": ENV_CHROMIUM, "found": "UI layer 16 Nov 2026", "status": "Closed",
+     "remarks": "DEV-014. Closed 20 Nov 2026: the Developer platform (incl. webhooks UI) was removed from the product; test and scenario retired."},
 ]
 
 ENV_NETWORK = "Chromium / Firefox / WebKit (Playwright 1.65), Windows 10, https://esignpro.net (production)"
@@ -232,6 +235,36 @@ BUGS += [
      "actual": "Standalone WebKit: 5/5 section tabs do nothing after the change; a second period change was ignored 2/2 (URL stays ?range=12m); the first change itself failed 1 of 3 tries. Before any change the tabs work.",
      "environment": "WebKit 26 (Playwright 1.65, Desktop Safari profile), Windows 10, https://esignpro.net — confirm on a real Safari/macOS",
      "found": "Cross-browser run 18 Nov 2026", "remarks": "Reproduction: tests/reports/reports.spec.ts (BUG-28, @smoke, runs cross-browser)."},
+    {"id": 'BUG-29', "module": 'Documents', "category": 'Functional', "severity": 'Minor', "priority": 'Medium', "new": True, "status": "New",
+     "description": "Archive view offers no 'Unarchive': the row menu still says 'Archive', and choosing it silently unarchives the document (no confirmation).",
+     "steps": "1. Documents > More actions > Archive > confirm ('You can unarchive it from there').\n2. Open the Archive folder > More actions on the document.",
+     "expected": "An 'Unarchive' (or 'Restore') item that returns the document to the library.",
+     "actual": "Menu identical to the library ('Archive', 'Delete' ...). Clicking 'Archive' removes the document from Archive (archived_at -> null) without any dialog.",
+     "environment": ENV_CHROMIUM + " (Team plan)", "found": "Coverage-gap tests 20 Nov 2026", "remarks": 'Reproduction: tests/flows/library-lifecycle.flow.spec.ts (BUG-29, @data).'},
+    {"id": 'BUG-30', "module": 'Documents', "category": 'Functional', "severity": 'Major', "priority": 'High', "new": True, "status": "New",
+     "description": "Trash has no Restore: neither the row menu nor the bulk bar can bring a deleted document back, although 'Move to Trash' says 'You can restore it from there'. Delete in Trash erases permanently.",
+     "steps": '1. Documents > More actions > Delete > Move to Trash.\n2. Open Trash > More actions; or select the row and look at the bulk bar.',
+     "expected": "A 'Restore' action that returns the document to the library.",
+     "actual": "Row menu: Open, Copy link, Add fields, Make template, Download, Print, Move to folder, Duplicate, Rename, Archive, Delete. Bulk bar: Move, Archive, Download, Delete. 'Delete' = 'Delete this document permanently?'.",
+     "environment": ENV_CHROMIUM + " (Team plan)", "found": "Coverage-gap tests 20 Nov 2026", "remarks": "Reproduction: tests/flows/library-lifecycle.flow.spec.ts (BUG-30, read-only). Whether 'Move' restores is untested."},
+    {"id": 'BUG-31', "module": 'Contacts', "category": 'Usability & Accessibility', "severity": 'Minor', "priority": 'Medium', "new": True, "status": "New",
+     "description": "Contact 'Add as recipient' adds the contact to whichever draft was edited last, without asking; the ~2 s notice names no envelope and miscounts ('added as recipient 4' for the 2nd recipient).",
+     "steps": "1. Contacts > open a contact > Add as recipient.\n2. Read the notice; check the drafts' recipients.",
+     "expected": 'The user picks the envelope (or is taken to it) and the confirmation names it.',
+     "actual": "POST /contacts/add-as-recipients; contact appended to the most recently updated draft; notice 'QA Contact ... added as recipient 4 - assign fields in the builder' disappears after ~2 s.",
+     "environment": ENV_CHROMIUM + " (Team plan)", "found": "Coverage-gap tests 20 Nov 2026", "remarks": 'Reproduction: tests/contacts/add-as-recipient.spec.ts (BUG-31, @data, removes the recipient again).'},
+    {"id": 'BUG-32', "module": 'Documents', "category": 'Functional', "severity": 'Minor', "priority": 'Low', "new": True, "status": "New",
+     "description": "Folder names are not unique: 'New folder' creates a second folder with an existing name. Folders cannot be renamed or deleted in the UI, so duplicates stay.",
+     "steps": '1. Documents > New folder > enter the name of an existing folder > Create.',
+     "expected": "Inline error ('A folder with this name already exists'); nothing created.",
+     "actual": 'A second folder with the same name appears in the Folders list.',
+     "environment": ENV_CHROMIUM + " (Team plan)", "found": "Coverage-gap tests 20 Nov 2026", "remarks": "Reproduction: tests/flows/library-lifecycle.flow.spec.ts (BUG-32, fixed name 'QA Folder (uniqueness check)')."},
+    {"id": 'BUG-33', "module": 'Overview', "category": 'Functional', "severity": 'Minor', "priority": 'Low', "new": True, "status": "New",
+     "description": "'Envelope volume - last 12 weeks' skips a week: rows are W34, W35, W36, W38 ... W46 (W37 missing, W34 extra).",
+     "steps": "1. Open /overview.\n2. Read the 'Envelopes created per week' table.",
+     "expected": 'Twelve consecutive ISO weeks ending with the latest week (W35 ... W46).',
+     "actual": 'W34, W35, W36, W38, W39, W40, W41, W42, W43, W44, W45, W46.',
+     "environment": ENV_CHROMIUM + " (Team plan)", "found": "Coverage-gap tests 20 Nov 2026", "remarks": 'Reproduction: tests/overview/overview.spec.ts (BUG-33, read-only). Likely a week-numbering error in the bucket labels.'},
 ]
 
 INITIAL_IMPL = {
@@ -251,7 +284,7 @@ INITIAL_IMPL = {
 
 GAP_PRIORITY = {
     "WF-010": "Critical", "SIGN-006": "Critical", "UF-26": "Critical", "UF-28": "Critical", "SIGN-003": "Critical",
-    "SEC-020": "Critical", "SEC-021": "Critical", "ACC-007": "Critical", "DEV-006": "Critical", "AUTH-008": "Critical",
+    "SEC-020": "Critical", "SEC-021": "Critical", "ACC-007": "Critical", "AUTH-008": "Critical",
     "PERF-006": "High", "PERF-007": "High", "SEC-024": "High", "INT-011": "High", "INT-012": "High",
 }
 

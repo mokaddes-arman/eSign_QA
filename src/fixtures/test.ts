@@ -9,7 +9,6 @@ import { PreparePage } from '../pages/PreparePage';
 import { WorkflowPage } from '../pages/WorkflowPage';
 import { ContactsPage } from '../pages/ContactsPage';
 import { ReportsPage } from '../pages/ReportsPage';
-import { DeveloperPage } from '../pages/DeveloperPage';
 import { SupportPage } from '../pages/SupportPage';
 import { AccountProfilePage } from '../pages/AccountProfilePage';
 import { BillingPage } from '../pages/BillingPage';
@@ -29,7 +28,6 @@ type UiFixtures = {
   workflowPage: WorkflowPage;
   contactsPage: ContactsPage;
   reportsPage: ReportsPage;
-  developerPage: DeveloperPage;
   supportPage: SupportPage;
   profilePage: AccountProfilePage;
   billingPage: BillingPage;
@@ -51,7 +49,6 @@ export const test = base.extend<UiFixtures>({
   workflowPage: async ({ page }, use) => use(new WorkflowPage(page)),
   contactsPage: async ({ page }, use) => use(new ContactsPage(page)),
   reportsPage: async ({ page }, use) => use(new ReportsPage(page)),
-  developerPage: async ({ page }, use) => use(new DeveloperPage(page)),
   supportPage: async ({ page }, use) => use(new SupportPage(page)),
   profilePage: async ({ page }, use) => use(new AccountProfilePage(page)),
   billingPage: async ({ page }, use) => use(new BillingPage(page)),

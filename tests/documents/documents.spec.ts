@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { test, expect } from '../../src/fixtures/test';
+import { clickUntilVisible } from '../../src/helpers/wait';
 
 const SAMPLE_DOC = path.resolve(__dirname, '../fixtures/sample-agreement.png');
 
@@ -74,5 +75,16 @@ test.describe('Documents library @smoke', () => {
       timeout: 10_000,
     });
     await testInfo.attach('folder-name', { body: folder, contentType: 'text/plain' });
+  });
+
+  test('DOC-008 a blank or whitespace-only folder name cannot be created', async ({ documentsPage, page }) => {
+    const dialog = page.getByRole('dialog', { name: 'New folder' });
+    await clickUntilVisible(documentsPage.newFolderButton, dialog);
+    const create = dialog.getByRole('button', { name: 'Create', exact: true });
+    await expect(create).toBeDisabled();
+    await dialog.getByRole('textbox', { name: 'Folder name' }).fill('   ');
+    await expect(create, 'whitespace-only name enables Create').toBeDisabled();
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(dialog).toBeHidden();
   });
 });

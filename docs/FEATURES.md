@@ -42,7 +42,7 @@ created.
 
 | ID | Feature | Notes |
 |----|---------|-------|
-| SHELL-01 | Main navigation | "Create envelope", Home, Documents, Contacts, Reports, Developer, Support, My account; contextual sub-navigation; Expand/Collapse sidebar. |
+| SHELL-01 | Main navigation | "Create envelope", Home, Documents, Contacts, Reports, Support, My account (Developer removed 20 Nov 2026); contextual sub-navigation; Expand/Collapse sidebar. |
 | SHELL-02 | Plan usage widget | "% of this month's envelopes used" link to billing. |
 | SHELL-03 | Global search | Header button or `Ctrl/Cmd + K`; ≥ 2 characters; results grouped (Documents, Templates, Contacts, Members) with highlighted match, result count, "See all documents matching …". |
 | SHELL-04 | Notifications popover | Header bell opens a "Notifications" popover with **See all notifications** → `/notifications`. |
@@ -182,21 +182,9 @@ created.
 
 ---
 
-## 10. Developer platform — `/developer/*`
+## 10. Developer platform — removed
 
-| ID | Feature |
-|----|---------|
-| DEV-01 | Add-on overview; **Launch embedded builder** (opens `/documents/prepare`). |
-| DEV-02 | Usage cards — Requests · 24h (p95), Error rate, Active keys (revoked), Embed sessions · 24h. |
-| DEV-03 | **API keys** (`?section=keys`) — Create key, secret shown once, empty state; embed snippet with Copy, **Allowed origins** and **Return URL** (save on blur); scopes `users:read`, `contacts:read`, `contacts:write`, `documents:read`, `documents:write`, `envelopes:send`, `audit:read`, `partner:manage`. |
-| DEV-04 | **Endpoints** (`?section=endpoints`) — groups Workspace / Documents / Embedding, per-route method + path (e.g. `GET /api/v1/whoami`), Copy, parameters, example response. |
-| DEV-05 | **Webhooks** (`?section=webhooks`) — Add endpoint dialog (Endpoint URL; Create disabled until valid), empty state. |
-| DEV-06 | **Plan usage** (`?section=usage`) — signature requests, API calls, storage, SMS for the cycle. |
-| DEV-07 | **Developer tools** (`?section=resources`) — Quickstart, API reference, API console, Embedding, Webhooks, Partner & reseller API, Migration guide. |
-| DEV-08 | **API console** `/developer/sandbox` — Live / Test environment, method (GET/POST/PATCH/DELETE), endpoint list, query-parameter editor, code snippet (cURL / TypeScript / Python) with Copy, Response panel, Recent calls (last six) with Clear. |
-| DEV-09 | **Guides & docs** `/developer/guides` — 14 guides in Getting started / Everyday use / Developers, Start product tour, Open API console. |
-| DEV-10 | **Activity logs** `/developer/logs` — event stream (57 events), source filter (All, API, Webhooks, Auth, Billing, Signing, Admin), level filter (Info, Warn, Error), search, expandable rows. |
-| DEV-11 | **Partner program** `/developer/partner` — application form: Company website, intended use, expected customers, contact name/e-mail, Send application. |
+Removed from the product on 20 Nov 2026 (sidebar entry gone; `/developer/*` redirects to the overview or shows "That page isn't here"). Tests and scenarios retired; the backend `/api/proxy/webhooks*` endpoints still answer and stay covered by the API contract tests.
 
 ---
 

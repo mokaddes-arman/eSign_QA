@@ -23,6 +23,8 @@ const DRAFT_SPECS = [
   '**/documents/prepare.spec.ts',
   '**/documents/builder-details.spec.ts',
   '**/signer/signer.spec.ts',
+  /* "Add as recipient" writes to the newest draft. */
+  '**/contacts/add-as-recipient.spec.ts',
 ];
 
 /**
@@ -38,6 +40,10 @@ const ACCOUNT_SPECS = [
   '**/billing/payments.spec.ts',
   '**/documents/upload.spec.ts',
   '**/flows/guest.flow.spec.ts',
+  /* Theme is saved to the account ("applies on every device"). */
+  '**/flows/personalise.flow.spec.ts',
+  /* Duplicates the newest draft (the copy briefly becomes the most recent draft). */
+  '**/flows/library-lifecycle.flow.spec.ts',
   '**/security/session.spec.ts',
 ];
 const SETUP = '**/setup/**';
@@ -127,6 +133,10 @@ export default defineConfig({
       testIgnore: [...ACCOUNT_SPECS, SETUP],
       use: { ...devices['Desktop Safari'] },
     },
+    /* COMP-008: Microsoft Edge (installed browser channel). Opt-in with PW_EDGE=1. */
+    ...(process.env.PW_EDGE
+      ? [{ name: 'edge', testIgnore: [...ACCOUNT_SPECS, SETUP], use: { ...devices['Desktop Edge'], channel: 'msedge' } }]
+      : []),
     {
       name: 'mobile-chrome',
       testIgnore: [...ACCOUNT_SPECS, SETUP],

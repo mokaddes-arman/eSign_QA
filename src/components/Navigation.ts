@@ -33,11 +33,11 @@ export class Navigation {
     await expect(this.nav).toBeVisible();
   }
 
-  sectionLink(name: 'Home' | 'Documents' | 'Contacts' | 'Reports' | 'Developer' | 'Support' | 'My account'): Locator {
+  sectionLink(name: 'Home' | 'Documents' | 'Contacts' | 'Reports' | 'Support' | 'My account'): Locator {
     return this.nav.getByRole('link', { name, exact: true });
   }
 
-  async goTo(section: 'Home' | 'Documents' | 'Contacts' | 'Reports' | 'Developer' | 'Support' | 'My account') {
+  async goTo(section: 'Home' | 'Documents' | 'Contacts' | 'Reports' | 'Support' | 'My account') {
     await this.open();
     await this.sectionLink(section).click();
     await this.page.waitForLoadState('domcontentloaded');

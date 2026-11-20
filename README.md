@@ -3,7 +3,7 @@
 End-to-end and regression automation for **https://esignpro.net**, built with
 **Playwright + TypeScript** using a **Page Object Model**. The suite covers every module
 discovered during the live walkthrough: authentication, dashboard, documents, the envelope
-builder, signing workflow, signer preview, contacts, reports, developer platform, support,
+builder, signing workflow, signer preview, contacts, reports, support,
 account/security settings and billing.
 
 | | |
@@ -57,7 +57,6 @@ esignpro-qa/
 │  │  ├─ SignerPreviewPage.ts # /documents/{id}/signer-view
 │  │  ├─ ContactsPage.ts      # /contacts, /contacts/{id}
 │  │  ├─ ReportsPage.ts       # /reports
-│  │  ├─ DeveloperPage.ts     # /developer/*
 │  │  ├─ SupportPage.ts       # /support
 │  │  ├─ AccountProfilePage.ts# /account/profile, /account/security
 │  │  └─ BillingPage.ts       # /account/billing
@@ -73,7 +72,6 @@ esignpro-qa/
 │  ├─ documents/     documents.spec.ts · prepare.spec.ts
 │  ├─ contacts/      contacts.spec.ts
 │  ├─ reports/       reports.spec.ts
-│  ├─ developer/     developer.spec.ts
 │  ├─ support/       support.spec.ts
 │  ├─ account/       account.spec.ts · settings.spec.ts
 │  ├─ ui/            <module>.ui.spec.ts — one UI spec per module (baseline, 390 px, dark, module UI)

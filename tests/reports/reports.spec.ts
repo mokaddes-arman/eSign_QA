@@ -1,3 +1,5 @@
+import type { Download } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
 import { test, expect } from '../../src/fixtures/test';
 import { KNOWN_BUGS, expectBugsToFail, knownBug } from '../../src/helpers/bugs';
 
@@ -72,6 +74,25 @@ test.describe('Reports & analytics @smoke', () => {
       'Rate',
     ]) {
       await expect(reportsPage.page.getByRole('columnheader', { name: column })).toBeVisible();
+    }
+  });
+
+  test('REP-007 export downloads a CSV that matches the invite outcomes on screen', async ({ reportsPage, page }) => {
+    await reportsPage.selectRange('Last 12 months');
+    /* Changing the period re-renders the page; a click before hydration is dropped (R3), so retry. */
+    let download!: Download;
+    await expect(async () => {
+      [download] = await Promise.all([page.waitForEvent('download', { timeout: 5_000 }), reportsPage.exportButton.click()]);
+    }).toPass({ timeout: 30_000 });
+    expect(download.suggestedFilename()).toMatch(/^invites-12m\.csv$/);
+    const [header, ...rows] = (await readFile(await download.path(), 'utf8')).trim().split(/\r?\n/);
+    expect(header).toBe('label,count');
+    const csv = Object.fromEntries(rows.map((r) => r.split(',')));
+    const outcomes = page.getByRole('list', { name: 'Invites by outcome' }).getByRole('listitem');
+    await expect(outcomes).toHaveCount(rows.length);
+    for (const item of await outcomes.all()) {
+      const label = (await item.innerText()).split('\n')[0].trim().toLowerCase().replace(/\s*\/\s*/g, '_');
+      expect(csv[label], `CSV row for "${label}"`).toBe((await item.locator('strong').innerText()).trim());
     }
   });
 });

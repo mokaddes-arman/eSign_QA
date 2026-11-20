@@ -17,7 +17,7 @@ test.describe('UI · Application shell', () => {
 
   test('every sidebar section has a visible, named link', async ({ navigation }) => {
     await navigation.open();
-    for (const section of ['Home', 'Documents', 'Contacts', 'Reports', 'Developer', 'Support', 'My account'] as const) {
+    for (const section of ['Home', 'Documents', 'Contacts', 'Reports', 'Support', 'My account'] as const) {
       await expect(navigation.sectionLink(section)).toBeVisible();
     }
   });

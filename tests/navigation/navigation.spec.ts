@@ -14,7 +14,6 @@ test.describe('Authenticated navigation', () => {
       'Documents',
       'Contacts',
       'Reports',
-      'Developer',
       'Support',
       'My account',
     ] as const) {
@@ -85,5 +84,18 @@ test.describe('Authenticated navigation', () => {
     const dialog = page.getByRole('dialog', { name: 'Search your workspace' });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole('combobox', { name: 'Search' })).toBeVisible();
+  });
+
+  test('NF-010 a dropped connection does not end the session', async ({ contactsPage, page, context, browserName }) => {
+    /* Offline emulation differs per engine (WebKit: internal error; Firefox: navigation left pending). */
+    test.skip(browserName !== 'chromium', 'Offline emulation is reliable on Chromium only');
+    await contactsPage.goto();
+    await context.setOffline(true);
+    await expect(page.reload()).rejects.toThrow(/ERR_INTERNET_DISCONNECTED/);
+    await context.setOffline(false);
+    await contactsPage.goto();
+    await expect(page).toHaveURL(/\/contacts/);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    test.info().annotations.push({ type: 'observation', description: 'Offline navigation shows the browser error page; the app has no offline notice of its own.' });
   });
 });

@@ -49,7 +49,6 @@ INT-001|INT|Documents|Library document count matches the documents API|"N docume
 INT-002|INT|Documents|Every API document title appears in the library|Row titles match API titles|I|integration/data-consistency.*INT-002|New test.
 INT-003|INT|Contacts|Address-book and group-chip counts match the contacts API|Heading and chips equal API totals|I|integration/data-consistency.*INT-003|New test.
 INT-004|INT|Billing|Sidebar plan-usage % matches billing usage API|Widget % = used/limit|I|integration/data-consistency.*INT-004|New test.
-INT-005|INT|Developer|Developer plan-usage meter matches billing usage API|Meter shows used/limit|I|integration/data-consistency.*INT-005|New test.
 INT-006|INT|Account|Profile page shows the API user record|Name and e-mail equal /me|I|integration/data-consistency.*INT-006|New test.
 API-001|INT|API|/me contract, no sensitive fields, < 2 s|200 JSON, typed fields|I|api/api-contract.*API-001|New test.
 API-002|INT|API|/documents contract and tenant isolation|Every item typed and in my organization|I|api/api-contract.*API-002|New test.
@@ -65,8 +64,6 @@ INT-007|INT|Auth|E-mail OTP delivery (third-party mail) within 2 min|OTP e-mail 
 INT-008|INT|Billing|Stripe test-mode card form integration|Card validated by Stripe; token returned|I|billing/payments.spec.*BIL-004|Stripe test-mode Embedded Checkout (setup and subscription).
 INT-009|INT|Payments|Stripe Connect onboarding round-trip|Redirect to Stripe, status returns connected|M||ACC-023; external onboarding.
 INT-010|INT|Integrations|Storage connectors (Google Drive / Dropbox) export|Export written to connector|B||Connectors disabled on this deployment ("Not available").
-INT-011|INT|Developer|Public REST API with API key (/api/v1/*)|Key-authenticated calls succeed; revoked key rejected|B||Requires creating a live API key (no confirmation, O10) — not authorised on production.
-INT-012|INT|Developer|Webhook delivery and signature verification|Event delivered with valid signature; retries|B||Needs a public receiver endpoint and a webhook write.
 INT-013|INT|Data|Database persistence of writes (direct DB check)|Rows persisted as shown in UI|B||No database access; persistence verified via UI reload/API instead (ACC-003, PREP-018).
 AUTH-001|FUNC|Auth|Landing page renders|Hero, CTA, Log in, pricing, footer; title eSignPro|I|public/public.spec.*landing page renders|
 AUTH-002|FUNC|Auth|Navigate to registration from landing|/register with "Create your workspace"|I|flows/guest.flow.*UF-01|Covered via pricing CTA journey.
@@ -81,7 +78,7 @@ AUTH-010|FUNC|Auth|Verify with wrong OTP|Inline error; stays on verify|M||Reachi
 AUTH-011|FUNC|Auth|Resend verification code|Toast; new code; old invalid|M||Needs mailbox.
 AUTH-012|FUNC|Auth|Login with valid credentials|Redirect to /overview|I|flows/guest.flow.*UF-05|Runs in chromium-account (single active session); session-restore teardown signs back in.
 AUTH-013|FUNC|Auth|Login with wrong password|Stays; error; no session|I|auth/login.spec.*rejects an invalid password|
-AUTH-014|FUNC|Auth|Empty login submit|No navigation|P|auth/login.spec.*empty login submit|Only asserts URL; no validation message checked.
+AUTH-014|FUNC|Auth|Empty login submit|No navigation; required fields flagged|I|auth/login.spec.*AUTH-014|Native required validation on e-mail and password; focus on e-mail.
 AUTH-015|UX|Auth|Show/hide password|Becomes readable, toggles|I|ui/auth.ui.spec.*password fields are masked|
 AUTH-016|FUNC|Auth|Remember this device|OTP skipped on next login|M||Needs fresh sign-in + OTP.
 AUTH-017|FUNC|Auth|Forgot password page|/login/forgot with e-mail field|P|public/public.spec.*forgot-password page|Presence-only; e-mail delivery manual.
@@ -91,7 +88,7 @@ AUTH-020|SEC|Auth|Protected route redirect for guests|/login?next=…|I|public/p
 AUTH-021|FUNC|Auth|Public pages render|200 and correct H1|I|public/public.spec.*(/trust¦/verify¦/security¦/legal¦/changelog) renders|
 AUTH-022|FUNC|Auth|Verify a signed document (/verify upload)|Hash match; tampered rejected|B||Needs a completed (signed) envelope; none exists (quota 6/6).
 AUTH-023|FUNC|Auth|Unknown route as guest|Redirect to login|I|public/public.spec.*unknown routes send guests|
-AUTH-024|UX|Auth|SSO / MFA notice on login|Notices visible|N||Simple to add.
+AUTH-024|FUNC|Auth|SSO / MFA notice on login|Notices visible|I|auth/login.spec.*AUTH-024|
 AUTH-025|FUNC|Auth|Registration rejects malformed e-mail before submit|Stays; field invalid; no request|I|auth/auth-validation.*AUTH-025|New test (writes blocked).
 AUTH-026|FUNC|Auth|Password length boundary 11 vs 12|11 → hint; 12 → accepted|I|auth/auth-validation.*AUTH-026|New boundary test. 11-char case fails: BUG-21.
 AUTH-027|FUNC|Auth|Password missing a character class not rated strong|Not Strong/Excellent|I|auth/auth-validation.*AUTH-027|New negative tests (3). Fails: BUG-21.
@@ -105,19 +102,19 @@ NAV-002|FUNC|Navigation|Sidebar navigation works|/contacts loads, marked active|
 NAV-003|FUNC|Navigation|Account & help menu|All items listed|P|navigation/navigation.spec.*account and help menu|Presence-only.
 NAV-004|FUNC|Navigation|Global search shortcut|Dialog opens focused|I|ui/navigation.ui.spec.*search dialog focuses the input|
 NAV-005|FUNC|Navigation|Global search results|Grouped results; Enter opens|I|navigation/navigation.spec.*global search returns grouped results|
-NAV-006|UX|Navigation|Theme toggle (and persistence)|Theme switches and persists|P|ui/navigation.ui.spec.*theme toggle|Toggle only; persistence not asserted.
-NAV-007|UX|Navigation|Collapsible sidebar|Collapses/expands|P|ui/navigation.ui.spec.*sidebar collapses|Persistence not asserted.
+NAV-006|FUNC|Navigation|Theme toggle (and persistence)|Theme switches and persists|I|flows/personalise.flow.*NAV-006¦ui/navigation.ui.spec.*theme toggle|Persists after reload (data-theme); restored after the test.
+NAV-007|FUNC|Navigation|Collapsible sidebar|Collapses/expands|I|flows/personalise.flow.*NAV-007¦ui/navigation.ui.spec.*sidebar collapses|Fold persists after reload (localStorage sf.sidebar.folded).
 NAV-008|COMP|Navigation|Mobile drawer|Drawer opens/closes; links usable|I|compatibility/viewports.*small phone.*COMP-002|New: navigation reachable at 360 px.
 NAV-009|FUNC|Navigation|Notifications popover|Popover; link to /notifications|I|navigation/navigation.spec.*notifications bell|
 NAV-010|FUNC|Navigation|Product tour|Step dialog; Skip closes|I|navigation/navigation.spec.*product tour|
 OVR-001|FUNC|Overview|Dashboard loads|Heading, summary|P|overview/overview.spec.*workspace summary|Presence-only.
 OVR-002|FUNC|Overview|KPI cards show values|Each KPI has a value|I|ui/overview.ui.spec.*every KPI card shows a value|
-OVR-003|FUNC|Overview|Dashboard widgets|Widgets visible|P|overview/overview.spec.*template, volume, spend|Presence-only.
+OVR-003|FUNC|Overview|Dashboard widgets|Widgets visible|P|overview/overview.spec.*(template, volume, spend¦BUG-33)|Presence + volume weeks consecutive (fails: BUG-33, W37 missing).
 OVR-004|FUNC|Overview|New envelope action|Routes to /documents/prepare|I|overview/overview.spec.*starts a new envelope|
 OVR-005|FUNC|Overview|Browse templates|Templates folder opens|I|overview/overview.spec.*opens the templates library|
 OVR-006|UX|Overview|Chart accessibility (data table)|Data alternative exposed|I|ui/overview.ui.spec.*volume chart has an accessible data alternative|
-OVR-007|FUNC|Overview|Plan renewal copy matches plan|"Free · renews <date>" = billing period|N||API period_end available — add consistency check.
-OVR-008|FUNC|Overview|Attention item navigation|Opens relevant page|N||
+OVR-007|INT|Overview|Plan renewal copy matches plan|"<Plan> · renews <date>" = billing period|I|overview/overview.spec.*OVR-007|Compared with /api/proxy/billing/usage plan_name and period_end.
+OVR-008|FUNC|Overview|Attention item navigation|Opens relevant page|I|overview/overview.spec.*OVR-008|Headline count = list length; first item opens its page (seats → /account/billing).
 DOC-001|FUNC|Documents|Library renders|Heading, search, toolbar|P|documents/documents.spec.*renders folders, views and toolbar|Presence-only.
 DOC-002|FUNC|Documents|Folder/view links filter the list|Drafts/Completed views list matching envelopes|I|documents/library-search.*DOC-002|New behaviour test (was presence-only).
 DOC-003|FUNC|Documents|Filter dimensions offered|All selects with options|I|documents/documents.spec.*exposes every filter dimension|
@@ -125,17 +122,17 @@ DOC-004|FUNC|Documents|Filter by status narrows the list|Rows match status; rese
 DOC-005|FUNC|Documents|Filter by type/time/owner|Result set narrows|N||Needs varied data (all 6 docs are identical drafts).
 DOC-006|FUNC|Documents|Sort order|Recent = updated desc; Name = alphabetical|I|documents/library-search.*DOC-006|New outcome tests; legacy test only checked the select value.
 DOC-007|FUNC|Documents|Create folder|Folder appears|I|documents/documents.spec.*creates a folder|@data — excluded on production runs.
-DOC-008|FUNC|Documents|Folder name validation (blank/duplicate)|Inline error; not created|N||Would write to production if validation is missing.
+DOC-008|FUNC|Documents|Folder name validation (blank/duplicate)|Inline error; not created|I|documents/documents.spec.*DOC-008¦flows/library-lifecycle.*BUG-32|Blank/whitespace blocked; duplicate name accepted (BUG-32, fixed folder name so runs add at most one).
 DOC-009|E2E|Documents|Upload & prepare|Draft created; builder opens|I|documents/upload.spec.*DOC-009|Quota-aware: uploads, verifies the new draft, moves it to Trash.
 DOC-010|FUNC|Documents|Upload unsupported file rejected|Clear error; no draft|B||Upload path blocked by quota (402) before type validation.
 DOC-011|FUNC|Documents|Templates folder|Templates view + catalog|I|documents/documents.spec.*opens the templates folder|
 DOC-012|FUNC|Documents|Row content|Title, ENV id, pages, status, signers|I|integration/data-consistency.*INT-002|Row titles checked against API.
-DOC-013|FUNC|Documents|Archive / Trash lifecycle|Moves and restores|N||Writes to production data.
+DOC-013|FUNC|Documents|Archive / Trash lifecycle|Moves and restores|I|flows/library-lifecycle.*(DOC-013¦BUG-29¦BUG-30)|On a copy: archive → unarchive → trash → erased. No Unarchive label (BUG-29), no Restore in Trash (BUG-30).
 DOC-014|FUNC|Documents|Favourites / sharing views|Appears in Favourites|N||Writes; sharing needs a second seat.
 DOC-015|FUNC|Documents|Empty state for no match + clear|Friendly empty state; clearing restores|I|documents/library-search.*DOC-015|New test.
 DOC-016|FUNC|Documents|Pagination|Showing X of Y; page controls|B||Only 6 documents; needs > page size.
 DOC-017|FUNC|Documents|Row actions menu|All actions listed|I|documents/library-actions.spec.*row actions menu lists|
-DOC-018|FUNC|Documents|Row actions behaviour (duplicate, rename, move, download, print)|Each applies|N||Duplicate consumes quota; rename/move write data.
+DOC-018|FUNC|Documents|Row actions behaviour (duplicate, rename, move, download, print)|Each applies|P|flows/library-lifecycle.*DOC-018|Duplicate, rename, move, archive, delete asserted via UI + API; download/print not yet.
 DOC-019|UX|Documents|Layout toggle & bulk selection|Layout switches; bulk bar|P|documents/library-actions.spec.*list/grid layout|Controls only.
 DOC-020|FUNC|Documents|Form catalog|Dialog; add copies form|P|documents/library-actions.spec.*form catalog opens|Dialog only.
 DOC-021|SEC|Documents|Unknown document id shows not-available|No data leak|I|documents/library-actions.spec.*unknown document id|
@@ -196,8 +193,8 @@ CON-003|FUNC|Contacts|Role & group options|Exact options|I|contacts/contacts.spe
 CON-004|FUNC|Contacts|Create contact|Saved; detail page|I|contacts/contacts.spec.*creates a contact|@data — excluded on production runs.
 CON-005|FUNC|Contacts|Required/format validation|Inline errors; nothing saved|I|contacts/contacts.spec.*rejects invalid email|Blank name → BUG-17; duplicate e-mail not covered.
 CON-006|FUNC|Contacts|Contact detail tabs|Tabs and actions|P|contacts/contacts.spec.*creates a contact|Only via @data test.
-CON-007|FUNC|Contacts|Edit contact persists|Values persist|N||Writes.
-CON-008|FUNC|Contacts|Add as recipient|Prefilled recipient|N||Writes to draft.
+CON-007|FUNC|Contacts|Edit contact persists|Values persist|I|flows/contacts.flow.*CON-007|Fixed test contact (reused, not re-created each run).
+CON-008|FUNC|Contacts|Add as recipient|Prefilled recipient|I|contacts/add-as-recipient.*CON-008|Adds to the newest draft without asking; notice names no envelope (BUG-31). Recipient removed afterwards.
 CON-009|FUNC|Contacts|Search contacts (list)|Matching rows; empty state|I|contacts/contacts-search.*CON-009|New tests (3).
 CON-010|FUNC|Contacts|Group filter chips|Rows = chip counts|I|contacts/contacts-search.*CON-010|New test.
 REP-001|FUNC|Reports|Reports dashboard|Scorecards, ranges|I|reports/reports.spec.*analytics scorecard|
@@ -206,30 +203,14 @@ REP-003|FUNC|Reports|Report sections listed|All sections|P|reports/reports.spec.
 REP-004|FUNC|Reports|Recipient report|Table columns|I|reports/reports.spec.*navigates to the recipient report|
 REP-005|FUNC|Reports|Document/template reports|Columns|P|reports/report-sections.spec.*(documents report¦templates report)|Presence-only.
 REP-006|FUNC|Reports|Custom report builder|Dimension becomes a column|I|reports/report-sections.spec.*custom report builder|
-REP-007|FUNC|Reports|Export report|Valid file downloads|N||Download is read-only — candidate.
+REP-007|FUNC|Reports|Export report|Valid file downloads|I|reports/reports.spec.*REP-007|invites-<range>.csv; every outcome count equals the on-screen figure.
 REP-008|UX|Reports|Empty period|Zeroed metrics; no NaN|I|ui/reports.ui.spec.*Reports.*meets the UI baseline|UI baseline checks NaN/undefined.
 REP-009|FUNC|Reports|All reports catalogue|6 CSV reports|P|reports/report-sections.spec.*all reports lists|Presence-only.
-DEV-001|FUNC|Developer|Developer overview|Heading, metrics|P|developer/developer.spec.*API health metrics|Presence-only.
-DEV-002|FUNC|Developer|Usage metrics show numbers|Numeric values|P|developer/developer.spec.*API health metrics|Presence-only.
-DEV-003|FUNC|Developer|Section navigation|?section= panel|I|developer/developer.spec.*navigates between developer sections|
-DEV-004|FUNC|Developer|API keys panel|Keys panel / empty state|P|developer/developer.spec.*lists API scopes|
-DEV-005|FUNC|Developer|Create API key|Secret shown once|B||Creates a live key instantly (O10) — not authorised.
-DEV-006|SEC|Developer|Roll/revoke key invalidates secret|Old secret rejected|B||Needs a live key.
-DEV-007|FUNC|Developer|Scopes inventory|All scopes|P|developer/developer.spec.*lists API scopes|Presence-only.
-DEV-008|FUNC|Developer|API console|Compose & run call|P|developer/developer-tools.spec.*API console offers methods|UI only.
-DEV-009|FUNC|Developer|Guides & docs|Guides listed|I|developer/developer.spec.*opens the guides library|
-DEV-010|FUNC|Developer|Activity logs / webhooks|Filters work|I|developer/developer-tools.spec.*activity logs filter|
-DEV-011|FUNC|Developer|Partner page|Form|P|developer/developer-tools.spec.*partner program|Presence-only.
-DEV-012|FUNC|Developer|Endpoints reference|Grouped routes|I|developer/developer-tools.spec.*endpoints reference|
-DEV-013|FUNC|Developer|Plan usage meters|Metered allowances|I|developer/developer-tools.spec.*plan usage lists metered|
-DEV-014|FUNC|Developer|Webhook endpoint validation|Create disabled for invalid URL|I|ui/developer.ui.spec.*BUG-18|BUG-18.
-DEV-015|FUNC|Developer|Embed snippet settings persist|Persist after reload|N||Writes workspace settings.
-DEV-016|SEC|Developer|Create key confirmation|Confirmation step|M||Product decision (O10).
 SUP-001|FUNC|Support|Support dashboard|Counters, filters|P|support/support.spec.*shows ticket counters|Presence-only.
 SUP-002|FUNC|Support|New ticket dialog|Fields|I|support/support.spec.*opens a new ticket|
 SUP-003|FUNC|Support|Priority/category inventory|Exact options|I|support/support.spec.*opens a new ticket|Same test as SUP-002.
 SUP-004|FUNC|Support|Empty ticket submit explains what is missing|Validation message|I|ui/support.ui.spec.*BUG-11|BUG-11.
-SUP-005|FUNC|Support|Create ticket + SLA|Listed under Open|N||Creates a real ticket that support staff would see.
+SUP-005|FUNC|Support|Create ticket + SLA|Listed under Open|I|flows/support.flow.*SUP-005|Ticket labelled [QA automation], P4; Open counter +1; SLA shown; resolved at the end. 'Close ticket' only closes the panel.
 SUP-006|FUNC|Support|Filters / sort / chips|Combine, reset, exclusive chips|I|support/support-search.*SUP-006|New tests (empty-queue data only).
 SUP-007|FUNC|Support|Queue controls|All present|I|support/support-queue.spec.*search, sort, export|
 SUP-008|FUNC|Support|Default priority P3|P3 · Normal|I|support/support-queue.spec.*defaults to P3|
@@ -237,15 +218,15 @@ SUP-009|FUNC|Support|Ticket search no-match empty state|Empty state; no errors|I
 ACC-001|FUNC|Account|Profile loads|Fields; Save disabled|I|account/account.spec.*shows profile details|
 ACC-002|FUNC|Account|Profile values|Name/e-mail match account|I|integration/data-consistency.*INT-006|Strengthened by INT-006.
 ACC-003|FUNC|Account|Edit profile persists|Persists and reverts|I|flows/account.flow.*UF-39|
-ACC-004|UX|Account|Appearance control|One option checked|P|ui/account.ui.spec.*colour mode has exactly one|Persistence not asserted.
+ACC-004|UX|Account|Appearance control|One option checked|I|ui/account.ui.spec.*colour mode has exactly one¦flows/personalise.flow.*ACC-004|Shell toggle is reflected in the account Colour mode.
 ACC-005|FUNC|Account|Signature dialog|Tabs, Adopt|P|account/account.spec.*appearance, password and signature|Presence-only.
-ACC-006|FUNC|Account|Adopt signature|Saved as default|N||Writes account data.
+ACC-006|FUNC|Account|Adopt signature|Saved as default|I|flows/account.flow.*ACC-006|Typed signature adopted → Default after reload → removed. Skips if the account already has one.
 ACC-007|SEC|Account|Change password end-to-end|Old password rejected|M||Changes the shared account's password.
 ACC-008|FUNC|Account|Change password validation|Inline errors|P|account/account.spec.*change password cannot continue|Empty current only.
 ACC-009|FUNC|Account|Login & security controls|Sections present|P|account/account.spec.*shows login & security controls|Presence-only.
 ACC-010|SEC|Account|Enable 2FA / passkey|Setup completes|M||Changes account security; needs authenticator.
 ACC-011|SEC|Account|Device session control|Session revoked|M||Kills the shared session.
-ACC-012|FUNC|Account|Notification preferences|8 switches|P|account/account.spec.*lists notification preferences|Persistence not asserted.
+ACC-012|FUNC|Account|Notification preferences|8 switches|I|account/account.spec.*lists notification preferences¦flows/account.flow.*ACC-012|Weekly summary toggled, persisted after reload, reverted.
 ACC-013|FUNC|Account|Integrations page|Catalogue|P|account/settings.spec.*integrations page|Presence-only.
 ACC-014|FUNC|Account|Organization & teams|People, teams, palette|P|account/settings.spec.*organization page lists|BUG-12 separate.
 ACC-015|FUNC|Account|Audit trail|Filters, pagination|P|account/settings.spec.*audit trail|Presence-only.
@@ -264,13 +245,13 @@ BIL-004|FUNC|Billing|Payment method dialog|Card form|I|billing/payments.spec.*BI
 BIL-005|FUNC|Billing|No payment method state|Empty states|P|billing/billing.spec.*shows billing details|
 BIL-006|FUNC|Billing|Enterprise trial|Trial terms|N||Would start a trial on production.
 BIL-007|SEC|Billing|Change plan guard without card|Payment prompted; nothing applied|I|billing/payments.spec.*BIL-007|State machine: upgrade charged once per period; downgrade scheduled for renewal; Keep plan cancels it.
-BIL-008|FUNC|Billing|Invoices list|Invoice list|N||No invoices on Free plan.
-BIL-009|FUNC|Billing|Billing details save on blur|Persists|N||Writes billing data.
+BIL-008|FUNC|Billing|Invoices list|Invoice list|I|billing/billing.spec.*BIL-008|List count = heading; detail opens; Subtotal + Tax = Total; receipt actions offered.
+BIL-009|FUNC|Billing|Billing details save on blur|Persists|I|flows/billing.flow.*BIL-009|Billing e-mail (account mailbox / its +alias) persists after blur. Observation: clearing the field is not saved.
 BIL-010|FUNC|Billing|Invoice / PO option|Form shown|N||
 BIL-012|FUNC|Billing|Change-plan preview prorates the price difference over the rest of the period|Prorated today = (new - current price) x remaining / period|I|billing/payments.spec.*BIL-012|New 18 Nov (black-box counterpart of UNIT-005).
 BIL-011|FUNC|Billing|Billing API outage handling|Banner + Retry|M||Needs fault injection (could use page.route in a future test).
 NF-007|FUNC|Platform|404 route when signed in|"That page isn't here"|I|navigation/navigation.spec.*unknown routes return the 404|
-NF-010|FUNC|Platform|Error/offline state|Friendly error; retry|N||Automatable with context.setOffline — candidate.
+NF-010|FUNC|Platform|Error/offline state|Friendly error; retry|P|navigation/navigation.spec.*NF-010|Session survives a dropped connection (Chromium). Offline navigation shows the browser error page — no in-app offline notice (observation).
 UF-01|E2E|Guest|Discover → choose a plan|Plan kept on /register|I|flows/guest.flow.*UF-01|
 UF-02|E2E|Guest|Sign up → verify → first visit|Overview greets new workspace|P|auth/signup.spec.*creates a workspace|Signup to the OTP page is automated; OTP entry needs a mailbox (GMAIL_* empty).
 UF-03|E2E|Guest|Sign in|Trusted device skips OTP|I|flows/guest.flow.*UF-05|Trusted-device sign-in, no OTP.
@@ -281,11 +262,11 @@ UF-07|E2E|Guest|Sign out / session expiry|Back button cannot reopen|I|security/s
 UF-08|E2E|Shell|Find anything|Results; Enter opens|I|navigation/navigation.spec.*global search returns grouped results|
 UF-09|E2E|Shell|Notifications journey|Read state persists|P|account/settings.spec.*notifications centre|
 UF-10|E2E|Shell|Product tour|Skip closes|I|navigation/navigation.spec.*product tour|
-UF-11|E2E|Shell|Personalise (theme, sidebar)|Persist|P|ui/navigation.ui.spec.*(theme toggle¦sidebar collapses)|No persistence.
+UF-11|E2E|Shell|Personalise (theme, sidebar)|Persist|I|flows/personalise.flow.*UF-11|Theme (account-wide) and sidebar fold persist after reload; both restored.
 UF-12|E2E|Documents|Upload → draft|Draft created|I|documents/upload.spec|Quota-aware upload journey.
 UF-13|E2E|Documents|Start from a template|Envelope with template fields|B||Quota.
-UF-14|E2E|Documents|Organise (search, filter, sort, folders…)|Counts update|P|documents/library-search.*|Search/filter/sort now automated; folders/move/archive write data.
-UF-15|E2E|Documents|Row actions journey|Each action has effect|P|documents/library-actions.spec.*row actions menu|Menu only.
+UF-14|E2E|Documents|Organise (search, filter, sort, folders…)|Counts update|I|documents/library-search.*¦flows/library-lifecycle.*UF-14|Search/filter/sort + folder/move/archive/trash lifecycle on a copy.
+UF-15|E2E|Documents|Row actions journey|Each action has effect|I|documents/library-actions.spec.*row actions menu¦flows/library-lifecycle.*UF-15|Duplicate, rename, move, archive, delete each verified.
 UF-16|E2E|Documents|Library → builder → back|Draft listed|I|flows/library.flow.*UF-16|
 UF-17|E2E|Prepare|Manage recipients journey|Cards update|P|documents/builder-details.spec.*manage-recipients|
 UF-18|E2E|Prepare|Find and favourite fields|Favourites first|I|ui/prepare.ui.spec.*(Favourites tab¦favourite toggle)|BUG-02 tracked separately.
@@ -303,14 +284,11 @@ UF-29|E2E|Signer|Decline / reassign|Audit entry|B||No sent envelopes.
 UF-30|E2E|Signer|In-person signing|Identity captured|B||No sent envelopes.
 UF-31|E2E|Signer|Pay while signing|Payment recorded|B||Stripe Connect.
 UF-32|E2E|Contacts|Build address book|Find created contact|I|flows/contacts.flow.*UF-32|@data — excluded on production runs.
-UF-33|E2E|Contacts|Contact → envelope|Recipient prefilled|M||Writes to draft.
+UF-33|E2E|Contacts|Contact → envelope|Recipient prefilled|I|contacts/add-as-recipient.*CON-008|See CON-008 / BUG-31.
 UF-34|E2E|Reports|Analyse activity|Every section loads|I|flows/reports.flow.*UF-34|
-UF-35|E2E|Developer|Explore the API|Sections deep-link|I|developer/developer.spec.*navigates between developer sections|
-UF-36|E2E|Developer|Key lifecycle|Revoked key rejected|B||Live keys not authorised.
-UF-37|E2E|Developer|Webhooks & embed|Invalid URL disabled|P|ui/developer.ui.spec.*BUG-18|Validation only.
-UF-38|E2E|Support|Raise and track a ticket|Ticket listed|P|support/support.spec.*validates that a ticket cannot be submitted|Negative only.
+UF-38|E2E|Support|Raise and track a ticket|Ticket listed|I|support/support.spec.*validates that a ticket cannot be submitted¦flows/support.flow.*UF-38|Create → listed Open with SLA → resolved.
 UF-39|E2E|Account|Profile edit journey|Persists, reverts|I|flows/account.flow.*UF-39|
-UF-40|E2E|Account|Signature journey|Offered when signing|P|account/account.spec.*signature settings|Dialog only.
+UF-40|E2E|Account|Signature journey|Offered when signing|P|account/account.spec.*signature settings¦flows/account.flow.*UF-40|Adopt/default/remove automated; 'offered when signing' needs a live signing session.
 UF-41|E2E|Account|Security journey|Re-auth enforced|P|account/account.spec.*change password cannot continue|Validation only.
 UF-42|E2E|Account|Organisation journey|Invite sent|P|account/settings.spec.*invite-member dialog|Validation only.
 UF-43|E2E|Account|Audit journey|Rows match filter|P|account/settings.spec.*audit trail|
@@ -336,13 +314,17 @@ REG-B12|REG|Account|Retest BUG-12 "People1" heading|Fixed → passes|I|ui/accoun
 REG-B13|REG|Public|Retest BUG-13 trust hero name|Fixed → passes|I|ui/public.ui.spec.*BUG-13|
 REG-B14|REG|Billing|Retest BUG-14 plan pre-selection|Fixed → passes|I|ui/billing.ui.spec.*BUG-14|
 REG-B15|REG|Auth|Retest BUG-15 registration error colour|Fixed → passes|I|ui/auth.ui.spec.*BUG-15|
-REG-B16|REG|Platform|Retest BUG-16 hydration error|No hydration error|P|ui/developer.ui.spec.*Activity logs.*meets the UI baseline|Intermittent; recorded as annotation, not failure.
+REG-B16|REG|Platform|Retest BUG-16 hydration error|No hydration error|P|ui/.*meets the UI baseline|Intermittent; recorded as annotation, not failure. (Was observed on /developer/logs, removed 20 Nov 2026.)
 REG-B17|REG|Contacts|Retest BUG-17 blank contact name|Fixed → passes|I|ui/contacts.ui.spec.*BUG-17|
-REG-B18|REG|Developer|Retest BUG-18 webhook URL validation|Fixed → passes|I|ui/developer.ui.spec.*BUG-18|
 REG-B25|REG|Billing|Retest BUG-25 upgrade charged the full month despite the prorated preview|Invoice equals the previewed prorated amount|M||No automated retest: an upgrade is charged once per billing period; compare invoice and preview at the next upgrade.
 REG-B26|REG|Billing|Retest BUG-26 change-plan copy vs scheduled downgrade|Copy matches the behaviour|M||Manual retest while on a paid plan.
 REG-B27|REG|Billing|Retest BUG-27 Recent charges ignores a paid invoice|Paid invoice listed under Recent charges|M||Manual retest.
 REG-B28|REG|Reports|Retest BUG-28 WebKit report tabs after a period change|Fixed → passes on WebKit|I|reports/reports.spec.*BUG-28|New bug 18 Nov; runs cross-browser (@smoke).
+REG-B29|REG|Documents|Retest BUG-29 Archive view offers Unarchive|Fixed → passes|I|flows/library-lifecycle.*BUG-29|New bug 20 Nov.
+REG-B30|REG|Documents|Retest BUG-30 Trash offers Restore|Fixed → passes|I|flows/library-lifecycle.*BUG-30|New bug 20 Nov.
+REG-B31|REG|Contacts|Retest BUG-31 Add as recipient names the envelope|Fixed → passes|I|contacts/add-as-recipient.*BUG-31|New bug 20 Nov.
+REG-B32|REG|Documents|Retest BUG-32 duplicate folder names rejected|Fixed → passes|I|flows/library-lifecycle.*BUG-32|New bug 20 Nov.
+REG-B33|REG|Overview|Retest BUG-33 volume chart weeks consecutive|Fixed → passes|I|overview/overview.spec.*BUG-33|New bug 20 Nov.
 REG-B19|REG|Platform|Retest BUG-19 label-in-name on shell controls|Fixed → passes|I|a11y/accessibility.*BUG-19|New bug this cycle.
 REG-B20|REG|Platform|Retest BUG-20 reflow at 320 px|Fixed → passes|I|a11y/accessibility.*BUG-20|New bug this cycle.
 REG-B21|REG|Auth|Retest BUG-21 password meter labels|Fixed → passes|I|auth/auth-validation.*BUG-21|New bug this cycle.
@@ -373,7 +355,7 @@ SEC-021|SEC|Auth|Brute-force / rate limiting on login|Lockout or throttling afte
 SEC-022|SEC|Session|Concurrent session policy (single active session)|New sign-in supersedes old|P|flows/guest.flow.*UF-05|UF-05 signs in with the trusted device; supersession itself is observed (R17) but not asserted.
 SEC-023|SEC|Data|No secrets in UI/logs/artifacts (NF-011)|Secret shown once; not in git|M||Needs a live API key; repo history contains the old password (TEST_PLAN §16.1).
 SEC-024|SEC|App|Dependency / penetration test (OWASP ZAP, SCA)|No high findings|B||Out of scope without authorization; recommend ZAP baseline on staging.
-SEC-025|SEC|Injection|Stored XSS in contact/folder names|Rendered as text|N||Requires writing data (@data) — run on staging.
+SEC-025|SEC|Injection|Stored XSS in contact/folder names|Rendered as text|I|flows/contacts.flow.*SEC-025|Contact name with an onerror payload: shown as text on list and detail; no script, no <img>. Folder names not yet.
 PERF-001|PERF|Public|Guest page load budgets (/, /login, /pricing)|TTFB ≤ 1.5 s, DCL ≤ 3 s, load ≤ 5 s|I|performance/performance.spec.*PERF-001|New (NF-012). Fails: BUG-24.
 PERF-002|PERF|App|Signed-in page load budgets (5 modules)|Same budgets|I|performance/performance.spec.*PERF-002|New (NF-012). Fails: BUG-24.
 PERF-003|PERF|API|API read latency p95 ≤ 1.5 s|5 samples per endpoint|I|performance/performance.spec.*PERF-003|New.
@@ -386,7 +368,7 @@ PERF-009|PERF|Load|Bottleneck identification (APM, slow queries)|Top slow endpoi
 UX-001|UX|Public|Public pages UI baseline (h1, landmarks, names, no raw values, no JS errors)|Baseline passes|I|ui/public.ui.spec.*meets the UI baseline|
 UX-002|UX|Auth|Auth pages UI baseline + error colour|Baseline; errors in error colour|I|ui/auth.ui.spec|
 UX-003|UX|Shell|Application shell UI (skip link, aria-current, search focus)|Passes|I|ui/navigation.ui.spec|
-UX-004|UX|App|Module pages UI baseline (all modules)|Baseline passes on every module route|I|ui/(overview¦documents¦contacts¦reports¦developer¦support¦account¦billing¦prepare¦workflow¦signer)\.ui\.spec.*meets the UI baseline|
+UX-004|UX|App|Module pages UI baseline (all modules)|Baseline passes on every module route|I|ui/(overview¦documents¦contacts¦reports¦support¦account¦billing¦prepare¦workflow¦signer)\.ui\.spec.*meets the UI baseline|
 UX-005|UX|App|Dark-scheme readability on every route|Heading contrast ≥ 3:1|I|ui/.*stays readable in dark mode|
 UX-006|UX|App|Validation & error messages styled and worded as errors|Error colour + clear wording|I|ui/(auth¦workflow)\.ui\.spec.*(error colour¦inline error)|BUG-06/08/15 tracked separately.
 A11Y-001|UX|Public|axe WCAG 2.1 AA — guest pages|No critical/serious violations|I|a11y/accessibility.*A11Y-001|New (5 pages). label-in-name tracked as BUG-19.
@@ -399,7 +381,7 @@ A11Y-007|UX|Contacts|Modal focus trap and focus return|Focus stays in dialog; re
 A11Y-008|UX|Shell|Reflow at 320 px (app shell)|No horizontal scroll|I|a11y/accessibility.*A11Y-008|New. Fails: BUG-20.
 A11Y-009|UX|App|Screen-reader pass (NVDA/VoiceOver) on core journeys|Announcements meaningful|M||Manual by definition.
 A11Y-010|UX|Prepare|Keyboard-only field placement (NF-003, UF-49)|Field placed with Enter; focus visible|P|documents/prepare.spec.*places a signature field|Placement by keyboard asserted; focus visibility not.
-A11Y-011|UX|App|Text resize 200 % / zoom|No loss of content|N||Candidate.
+A11Y-011|UX|App|Text resize 200 % / zoom|No loss of content|I|a11y/accessibility.spec.*A11Y-011|5 module pages at 200 % root font size: no horizontal scroll, heading not clipped.
 UX-007|UX|App|Navigation & UX heuristic review|Consistent, discoverable|M||Expert review; findings logged as BUG-09/O-items.
 COMP-001|COMP|App|Module pages at 360 / 768 / 1024 / 1920 px|No horizontal scroll; h1 visible|I|compatibility/viewports.*COMP-001|New (16 tests).
 COMP-002|COMP|Shell|Navigation reachable at every viewport|Drawer/sidebar works|I|compatibility/viewports.*COMP-002|New.
@@ -408,7 +390,7 @@ COMP-004|COMP|App|Phone width 390 px on every route (NF-002)|No horizontal scrol
 COMP-005|COMP|Browsers|Firefox smoke|Same as Chromium|I|@smoke|Computed from the firefox project run.
 COMP-006|COMP|Browsers|WebKit (Safari engine) smoke|Same as Chromium|I|@smoke|Computed from the webkit project run.
 COMP-007|COMP|Devices|Mobile Chrome (Pixel 7) smoke|Same as Chromium|I|@smoke|Computed from the mobile-chrome project run.
-COMP-008|COMP|Browsers|Microsoft Edge / branded Chrome channels|Same as Chromium|N||Add channel projects if Edge is a supported browser.
+COMP-008|COMP|Browsers|Microsoft Edge / branded Chrome channels|Same as Chromium|I|@smoke|Opt-in project `edge` (channel msedge): npm run test:edge. Computed from the edge project run.
 COMP-009|COMP|OS|macOS / Linux / Windows OS matrix|Same results on each OS|P||Windows (local) + Ubuntu (CI) only; macOS not available.
 COMP-010|COMP|Devices|Real iOS/Android devices|Same results|B||Emulation only; needs a device cloud.
 COMP-013|COMP|Reports|Report section navigation in WebKit after changing the period|Tabs navigate in every engine|I|reports/reports.spec.*BUG-28|New 18 Nov: fails on WebKit only (BUG-28).

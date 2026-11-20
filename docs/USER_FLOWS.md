@@ -106,13 +106,9 @@ mailbox, quota, payment or an IdP). Spec paths are relative to `tests/`.
 |----|------|-------|-------------|-----------------|------|
 | UF-34 | Analyse activity | Range → sections → custom report → export | Every section loads for every range; numbers agree with library (O3/O5); no NaN/empty names | Empty period | ✔ `flows/reports.flow`, `reports/*`, `ui/reports.ui` |
 
-## I. Developer platform
+## I. Developer platform — retired
 
-| ID | Flow | Steps | Checkpoints | Negative / edge | Auto |
-|----|------|-------|-------------|-----------------|------|
-| UF-35 | Explore the API | Overview → Endpoints → Console → Guides → Logs | Sections deep-link (`?section=`); console composes snippet | — | ✔ `developer/*`, `ui/developer.ui` |
-| UF-36 | Key lifecycle | Create key → copy secret → roll → revoke → restore | Secret shown once; revoked key rejected | Create has no confirmation (O10) | M (creates live keys) |
-| UF-37 | Webhooks & embed | Add endpoint → validate URL; allowed origins / return URL | Invalid URL keeps Create disabled (**BUG-18**); values persist | — | ◐ `ui/developer.ui` |
+Removed from the product on 20 Nov 2026 (sidebar entry gone; `/developer/*` redirects to the overview or shows "That page isn't here"). Tests and scenarios retired; the backend `/api/proxy/webhooks*` endpoints still answer and stay covered by the API contract tests. UF-35…UF-37 retired.
 
 ## J. Support
 
@@ -161,7 +157,6 @@ mailbox, quota, payment or an IdP). Spec paths are relative to `tests/`.
 | Signing | 4 | 0 | 1 | 0 | 3 |
 | Contacts | 2 | 1 | 0 | 1 | 0 |
 | Reports | 1 | 1 | 0 | 0 | 0 |
-| Developer | 3 | 1 | 1 | 1 | 0 |
 | Support | 1 | 0 | 1 | 0 | 0 |
 | Account | 6 | 1 | 5 | 0 | 0 |
 | Billing | 2 | 1 | 1 | 0 | 0 |

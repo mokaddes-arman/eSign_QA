@@ -53,7 +53,7 @@ e-mail OTP.
 | 7 | Signer experience preview | `/documents/{id}/signer-view` |
 | 8 | Contacts address book and contact detail | `/contacts`, `/contacts/{id}` |
 | 9 | Reports & analytics | `/reports` |
-| 10 | Developer platform (API keys, endpoints, webhooks, console, guides, logs, partner) | `/developer/*` |
+| 10 | ~~Developer platform~~ — removed from the product 20 Nov 2026 | — |
 | 11 | Support tickets | `/support` |
 | 12 | Account: profile, appearance, signatures, security, notifications, integrations, organisation, audit, payments, branding | `/account/*`, `/notifications` |
 | 13 | Billing & plan, change plan, seats, payment method | `/account/billing` |
@@ -116,7 +116,6 @@ e-mail OTP.
 | Signer | ✔ | ✔ | ◐ | ✔ | ✔ | – |
 | Contacts | ✔ | ✔ | – | ✔ | ✔ | ◐ |
 | Reports | ✔ | ✔ | – | ✔ | ✔ | – |
-| Developer | ✔ | ✔ | – | ✔ | ✔ | ✔ |
 | Support | ✔ | ✔ | – | ✔ | ✔ | – |
 | Account/Security | ✔ | ✔ | – | ✔ | ✔ | – |
 | Billing | ✔ | ✔ | – | ✔ | ✔ | – |

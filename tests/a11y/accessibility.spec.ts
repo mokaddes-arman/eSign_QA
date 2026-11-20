@@ -13,7 +13,7 @@ import { waitForHydration } from '../../src/helpers/wait';
  * Case ids A11Y-001…A11Y-008 (docs/TEST_CASES.md §17).
  */
 const GUEST_PAGES = ['/', '/login', '/register', '/login/forgot', '/pricing'];
-const APP_PAGES = ['/overview', '/documents', '/documents/prepare', '/contacts', '/reports', '/support', '/developer/api', '/account/profile', '/account/billing'];
+const APP_PAGES = ['/overview', '/documents', '/documents/prepare', '/contacts', '/reports', '/support', '/account/profile', '/account/billing'];
 
 test.describe('Accessibility · axe WCAG 2.1 AA @a11y', () => {
   test.describe('guest pages', () => {
@@ -129,4 +129,19 @@ test.describe('Accessibility · keyboard & focus @a11y', () => {
     await expectNoHorizontalOverflow(page, 4);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   });
+});
+
+test.describe('Accessibility · text resize @a11y', () => {
+  for (const path of ['/overview', '/documents', '/contacts', '/reports', '/account/billing']) {
+    test(`A11Y-011 ${path} keeps content at 200 % text size (WCAG 1.4.4)`, async ({ page }) => {
+      await page.goto(path, { waitUntil: 'domcontentloaded' });
+      await waitForHydration(page);
+      await page.addStyleTag({ content: 'html { font-size: 200% !important }' });
+      await expectNoHorizontalOverflow(page, 2);
+      const h1 = page.getByRole('heading', { level: 1 });
+      await expect(h1).toBeInViewport();
+      const box = (await h1.boundingBox())!;
+      expect(box.x + box.width, 'page heading is clipped on the right').toBeLessThanOrEqual(page.viewportSize()!.width);
+    });
+  }
 });

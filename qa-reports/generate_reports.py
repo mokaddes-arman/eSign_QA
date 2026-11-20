@@ -145,7 +145,7 @@ if _full:
             if t["project"] == "chromium-account" and t["key"] not in FINAL and run["role"] == "auto":
                 FINAL[t["key"]] = (run, t)
 XB = {p: {t["key"]: (run, t) for run in runs if run["role"] in ("xbrowser", "auto") for t in run["tests"] if t["project"] == p}
-      for p in ("firefox", "webkit", "mobile-chrome")}
+      for p in ("firefox", "webkit", "mobile-chrome", "edge")}
 
 SPECIAL = {
     "REG-001": ("chromium", "@smoke"),
@@ -154,6 +154,7 @@ SPECIAL = {
     "COMP-005": ("firefox", "@smoke"),
     "COMP-006": ("webkit", "@smoke"),
     "COMP-007": ("mobile-chrome", "@smoke"),
+    "COMP-008": ("edge", "@smoke"),
 }
 
 

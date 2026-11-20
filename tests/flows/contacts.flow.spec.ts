@@ -1,4 +1,6 @@
 import { test, expect } from '../../src/fixtures/test';
+import { ensureContact, listContacts } from '../../src/helpers/contacts';
+import { clickUntilVisible, waitForHydration } from '../../src/helpers/wait';
 
 /** UF-32 — build the address book: create a contact, then find it again from anywhere. */
 test.describe('Flow · Contacts', () => {
@@ -34,5 +36,33 @@ test.describe('Flow · Contacts', () => {
       await hit.click();
       await expect(page).toHaveURL(/\/contacts\/[0-9a-z-]+/i);
     });
+  });
+
+  test('CON-007 edits to a contact persist after reload @flow @data', async ({ contactsPage, page }) => {
+    const id = await ensureContact(page, contactsPage, { fullName: 'QA Contact (edit check)', email: 'qa.contact.edit-check@example.com', company: 'QA Flow Ltd' });
+    const title = `QA Edit ${Date.now()}`;
+    await page.goto(`/contacts/${id}`, { waitUntil: 'domcontentloaded' });
+    await waitForHydration(page);
+    const jobTitle = page.getByRole('textbox', { name: 'Job title' });
+    await clickUntilVisible(page.getByRole('button', { name: 'Edit contact' }), jobTitle);
+    await jobTitle.fill(title);
+    await page.getByRole('button', { name: 'Save changes' }).click();
+    await expect(jobTitle).toBeHidden();
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('tabpanel', { name: 'Contact details' })).toContainText(title, { timeout: 20_000 });
+    await expect.poll(async () => (await listContacts(page)).find((c) => c.id === id)?.title).toBe(title);
+  });
+
+  test('SEC-025 a script-like contact name is shown as text and never runs @security @data', async ({ contactsPage, page }) => {
+    const name = 'QA <img src=x onerror="window.__xss=1"> XSS';
+    const id = await ensureContact(page, contactsPage, { fullName: name, email: 'qa.contact.xss-check@example.com' });
+    page.on('dialog', (d) => { throw new Error(`script ran: dialog "${d.message()}"`); });
+    for (const url of ['/contacts', `/contacts/${id}`]) {
+      await page.goto(url, { waitUntil: 'domcontentloaded' });
+      await waitForHydration(page);
+      await expect(page.getByText(name, { exact: true }).first(), `${url} does not show the name as text`).toBeVisible({ timeout: 20_000 });
+      expect(await page.evaluate(() => (window as unknown as { __xss?: number }).__xss), `payload executed on ${url}`).toBeUndefined();
+      expect(await page.locator('main img[src="x"]').count(), `payload rendered as an <img> on ${url}`).toBe(0);
+    }
   });
 });

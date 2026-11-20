@@ -43,7 +43,7 @@ session `auth/storageState.json`. Sample upload: `tests/fixtures/sample-agreemen
 
 | ID | Test case | P | Type | Precondition | Steps | Expected | Auto |
 |----|-----------|---|------|--------------|-------|----------|------|
-| NAV-001 | Sidebar exposes all modules | P1 | Smoke | Signed in | Open sidebar | Home, Documents, Contacts, Reports, Developer, Support, My account, Create, plan widget visible | ✔ |
+| NAV-001 | Sidebar exposes all modules | P1 | Smoke | Signed in | Open sidebar | Home, Documents, Contacts, Reports, Support, My account, Create, plan widget visible | ✔ |
 | NAV-002 | Sidebar navigation works | P1 | Functional | Signed in on Overview | Click **Contacts** | `/contacts` loads; Contacts marked active | ✔ |
 | NAV-003 | Account & help menu | P2 | Functional | Signed in | Click **Account and help** | Menu shows name, e-mail, workspace, admin role, My account, Notifications, Start product tour, Support centre, Contact support, Guides & docs, API console, Sign out | ✔ |
 | NAV-004 | Global search shortcut | P2 | Functional | Signed in | Press `Ctrl/Cmd+K` | "Search your workspace" dialog opens, focused Search combobox, hint "Type at least 2 characters" | ✔ |
@@ -194,26 +194,9 @@ session `auth/storageState.json`. Sample upload: `tests/fixtures/sample-agreemen
 | REP-009 | All reports catalogue | P2 | Functional | Reports open | Open **All reports** | 6 CSV reports listed (documents, templates, template usage, completed copies, recipients, audit) | ✔ |
 | REP-010 | Report data accuracy | P1 | Functional | Mixed sent/draft data | Compare scorecards with library | Drafts are not counted as sent invites; statuses match the library (FEATURES O3, O5) | M |
 
-## 10. Developer platform (`DEV`)
+## 10. Developer platform (`DEV`) — retired
 
-| ID | Test case | P | Type | Precondition | Steps | Expected | Auto |
-|----|-----------|---|------|--------------|-------|----------|------|
-| DEV-001 | Developer overview | P2 | Smoke | Signed in | Open `/developer/api` | Heading, add-on summary, usage metrics | ✔ |
-| DEV-002 | Usage metrics | P2 | Functional | Developer page | Inspect metrics | Requests/24h, p95, error rate, active keys, embed sessions show numbers | ✔ |
-| DEV-003 | Section navigation | P2 | Functional | Developer page | Open API keys / Webhooks | URL `?section=…`; correct panel renders | ✔ |
-| DEV-004 | API keys empty state | P2 | Functional | No keys | Open API keys | "No API keys yet" + Create key | ✔ (keys panel, data-independent) |
-| DEV-005 | Create API key | P1 | Functional | API keys page | Create key → name/scopes → confirm | Secret shown once; key listed with scopes; copy works | M |
-| DEV-006 | Roll/revoke key | P1 | Security | Key exists | Roll then revoke | Old secret invalid immediately; revoked key cannot call API | M |
-| DEV-007 | Scopes inventory | P2 | Functional | API keys page | Inspect scopes | users:read, contacts:read/write, documents:read/write, envelopes:send, audit:read, partner:manage | ✔ |
-| DEV-008 | API console | P2 | Functional | Developer page | Open API console → compose call → Send request | Request executed against workspace; response/status/headers shown | ✔ (UI) / M (call) |
-| DEV-009 | Guides & docs | P2 | Functional | Developer page | Open Guides | Quickstart, reference, embedding, webhooks, partner, migration docs | ✔ |
-| DEV-010 | Activity logs / webhooks | P2 | Functional | Developer page | Open Activity logs and Webhooks | Log rows/filters; webhook signature + retry guidance | ✔ `tests/developer/developer-tools.spec.ts` |
-| DEV-011 | Partner page | P2 | Functional | Developer page | Open Become a partner | Partner/reseller provisioning info and CTA | ✔ (form) / M (submit) |
-| DEV-012 | Endpoints reference | P2 | Functional | Developer page | Open Endpoints | Workspace/Documents/Embedding groups; route, parameters, example response | ✔ |
-| DEV-013 | Plan usage meters | P2 | Functional | Developer page | Open Plan usage | Signature requests, API calls, storage, SMS with used/allowance | ✔ |
-| DEV-014 | Webhook endpoint validation | P2 | Negative | Webhooks | Add endpoint with empty/invalid URL | Create endpoint disabled; valid https URL enables it (**BUG-18**: enabled for "not a url") | ✔ `tests/ui/developer.ui.spec.ts` |
-| DEV-015 | Embed snippet settings | P2 | Functional | API keys | Edit Allowed origins / Return URL, blur | Values persist after reload; snippet updates | M |
-| DEV-016 | Create key has no confirmation | P2 | Security | API keys | Click Create key | Product decision needed: key is created instantly (FEATURES O10) | M |
+Removed from the product on 20 Nov 2026 (sidebar entry gone; `/developer/*` redirects to the overview or shows "That page isn't here"). Tests and scenarios retired; the backend `/api/proxy/webhooks*` endpoints still answer and stay covered by the API contract tests. DEV-001…DEV-016 are no longer part of the suite; BUG-18 is closed.
 
 ## 11. Support (`SUP`)
 
@@ -355,7 +338,6 @@ UI assertions.
 | UI-008 | Signer preview | `tests/ui/signer.ui.spec.ts` | `/documents/{id}/signer-view` | Preview status; progress value; mobile toggle; preview-as counts |
 | UI-009 | Contacts | `tests/ui/contacts.ui.spec.ts` | `/contacts` | Dialog labels/focus/Escape; blank-name flagged; group filters |
 | UI-010 | Reports | `tests/ui/reports.ui.spec.ts` | 6 sections | Table headers; no empty recipient names (O4) |
-| UI-011 | Developer | `tests/ui/developer.ui.spec.ts` | 9 routes | Active section; webhook URL validation |
 | UI-012 | Support | `tests/ui/support.ui.spec.ts` | `/support` | Dialog labels; BUG-11 |
 | UI-013 | Account | `tests/ui/account.ui.spec.ts` | 9 routes | Save disabled when clean; one colour mode; password dialog labels; switches; BUG-12 |
 | UI-014 | Billing | `tests/ui/billing.ui.spec.ts` | `/account/billing` | Summary not blank (O1); seat cost preview; BUG-14 |
@@ -432,7 +414,6 @@ Tags: `@api`, `@security`, `@perf`, `@a11y`, `@compat` (e.g. `npx playwright tes
 | Signer | 8 | 3 | 1 | 4 |
 | Contacts | 10 | 4 | 3 | 3 |
 | Reports | 10 | 6 | 1 | 3 |
-| Developer | 16 | 9 | 3 | 4 |
 | Support | 8 | 6 | 1 | 1 |
 | Account | 23 | 13 | 5 | 5 |
 | Billing | 11 | 4 | 1 | 6 |

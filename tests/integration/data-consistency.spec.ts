@@ -60,17 +60,6 @@ test.describe('Integration · UI ↔ API consistency', () => {
     await expect(navigation.planUsageLink).toContainText(`${percent}%`);
   });
 
-  test('INT-005 developer plan-usage meter matches billing usage', async ({ developerPage, request }) => {
-    const usage = await (await request.get(API.billingUsage)).json();
-    const { limit, used } = usage.limits.max_documents_per_month;
-
-    await developerPage.goto();
-    await developerPage.openSection('Plan usage');
-    const region = developerPage.page.getByRole('region', { name: /Plan usage · current cycle/ });
-    /* Rendered e.g. "6 / 6" or "6 of 6" next to "Signature requests". */
-    await expect(region).toContainText(new RegExp(`${used}\\s*(/|of)\\s*${limit}`));
-  });
-
   test('INT-006 profile page shows the API user record', async ({ profilePage, request }) => {
     const me = await (await request.get(API.me)).json();
     await profilePage.goto();

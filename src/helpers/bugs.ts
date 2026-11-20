@@ -146,13 +146,6 @@ export const KNOWN_BUGS = {
     expected: 'Full name is flagged as required with a visible error',
     caseId: 'CON-005',
   },
-  BUG18: {
-    id: 'BUG-18',
-    severity: 'S3',
-    summary: 'Webhook "Add endpoint" enables Create for a value that is not a URL ("not a url")',
-    expected: 'Create endpoint stays disabled until a valid https URL is entered',
-    caseId: 'DEV-014',
-  },
   /* Found by the coverage-gap tests on 17 Nov 2026 (qa-reports/QA_Bug_Report.xlsx). */
   BUG19: {
     id: 'BUG-19',
@@ -203,7 +196,45 @@ export const KNOWN_BUGS = {
     expected: 'Report section tabs navigate in every browser, also after the period changed',
     caseId: 'REP-002',
   },
+  BUG29: {
+    id: 'BUG-29',
+    severity: 'S3',
+    summary: 'Archive view offers no "Unarchive": the row menu still says "Archive", and choosing it silently unarchives the document',
+    expected: 'Archived documents offer an explicit "Unarchive" (or "Restore") action, as the archive confirmation promises',
+    caseId: 'DOC-013',
+  },
+  BUG30: {
+    id: 'BUG-30',
+    severity: 'S2',
+    summary: 'Trash has no Restore: neither the row menu nor the bulk bar can bring a deleted document back, although "Move to Trash" says it can be restored',
+    expected: 'Documents in Trash offer "Restore", which returns them to the library',
+    caseId: 'DOC-013',
+  },
+  BUG31: {
+    id: 'BUG-31',
+    severity: 'S3',
+    summary: 'Contact "Add as recipient" adds the contact to whichever draft is newest without asking; the 2-second notice names no envelope and miscounts ("recipient 4" for the 2nd recipient)',
+    expected: 'The user chooses the envelope (or is taken to it), and the confirmation names that envelope',
+    caseId: 'CON-008',
+  },
+  BUG32: {
+    id: 'BUG-32',
+    severity: 'S4',
+    summary: 'Folder names are not unique: "New folder" creates a second folder with an existing name',
+    expected: 'A duplicate folder name is rejected with an inline error and no folder is created',
+    caseId: 'DOC-008',
+  },
+  BUG33: {
+    id: 'BUG-33',
+    severity: 'S4',
+    summary: 'Overview "Envelope volume · last 12 weeks" skips a week number (W34, W35, W36, W38 … W46) — the weeks are not consecutive',
+    expected: 'Twelve consecutive ISO weeks ending with the latest week',
+    caseId: 'OVR-003',
+  },
 } as const satisfies Record<string, KnownBug>;
+
+/** Fixed folder used by the duplicate-name check, so runs do not create a new name each time. */
+export const UNIQUENESS_FOLDER = 'QA Folder (uniqueness check)';
 
 /** Fixed template name used by the uniqueness check, so runs never pile up templates. */
 export const UNIQUENESS_TEMPLATE = 'QA Template (uniqueness check)';

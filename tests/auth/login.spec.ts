@@ -28,8 +28,19 @@ test.describe('Authentication · login', () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test('empty login submit stays on login @regression', async ({ loginPage, page }) => {
+  test('AUTH-014 empty login submit is blocked on the e-mail field @regression', async ({ loginPage, page }) => {
     await loginPage.signInButton.click();
     await expect(page).toHaveURL(/\/login/);
+    /* Native required validation: the e-mail is flagged first and receives focus. */
+    for (const input of [loginPage.emailInput, loginPage.passwordInput]) {
+      expect(await input.evaluate((el: HTMLInputElement) => el.validity.valueMissing)).toBe(true);
+    }
+    await expect(loginPage.emailInput).toBeFocused();
+  });
+
+  test('AUTH-024 sign-in explains SSO redirect and multi-factor protection', async ({ page }) => {
+    await expect(page.getByText(/Enterprise tenants may be redirected to their identity provider/)).toBeVisible();
+    await expect(page.getByText('Protected by multi-factor authentication')).toBeVisible();
+    await expect(page.getByRole('list', { name: 'Security controls' }).getByText('Multi-factor sign-in')).toBeVisible();
   });
 });

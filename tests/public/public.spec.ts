@@ -56,7 +56,7 @@ test.describe('Public site', () => {
 });
 
 test.describe('Access control', () => {
-  for (const route of ['/overview', '/documents', '/account/security', '/developer/api']) {
+  for (const route of ['/overview', '/documents', '/account/security', '/reports']) {
     test(`guest is redirected from ${route} to login with next= @smoke`, async ({ page }) => {
       await page.goto(route);
       await expect(page).toHaveURL(new RegExp(`/login\\?next=${encodeURIComponent(route)}`));
