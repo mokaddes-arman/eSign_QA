@@ -96,6 +96,10 @@ async function addSecondRecipient(page: Page): Promise<Locator> {
   await email.fill(SECOND_EMAIL);
   await email.press('Enter');
   await expect(dialog.getByText(SECOND_EMAIL, { exact: true })).toHaveCount(1);
+  /* Every edit here autosaves as a full-list PUT. An edit made while an earlier PUT is still in
+     flight can be overwritten when that response replaces the list (seen on CI, 24 Nov 2026:
+     the role change was lost). Let each save land before the next edit, as a user would. */
+  await settleAutosave(page);
   return dialog;
 }
 
@@ -149,8 +153,13 @@ test.describe('Builder behaviour', () => {
     const keep = (await apiRecipients(page, draftId)).map((r) => r.id);
     try {
       const dialog = await addSecondRecipient(page);
-      await dialog.getByRole('combobox', { name: /role$/ }).last().selectOption({ label: 'Approver' });
+      const role = dialog.getByRole('combobox', { name: /role$/ }).last();
+      await role.selectOption({ label: 'Approver' });
+      await expect(role).toHaveValue('approve');
+      await settleAutosave(page);
       await dialog.getByRole('button', { name: /^Move .+ up$/ }).last().click();
+      await expect(dialog.getByRole('combobox', { name: /role$/ }).first(), 'the moved recipient keeps its role').toHaveValue('approve');
+      await settleAutosave(page);
       await dialog.getByRole('button', { name: 'Save and Continue' }).click();
       await expect(dialog).toBeHidden();
       await settleAutosave(page);
