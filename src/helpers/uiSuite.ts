@@ -42,7 +42,7 @@ export function uiBaseline(routes: UiRoute[]): void {
   for (const route of routes) {
     const details = route.bug ? knownBug(route.bug) : {};
     test(`${route.name} meets the UI baseline`, details, async ({ page }, testInfo) => {
-      expectOpenBugsToFail();
+      if (route.bug) expectOpenBugsToFail();
       const errors = trackPageErrors(page);
       await open(page, route);
       await expectStandardUi(page, testInfo, errors, { landmarks: route.landmarks });
