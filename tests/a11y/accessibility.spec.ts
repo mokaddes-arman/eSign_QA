@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect } from '../../src/fixtures/test';
 import { describeViolations, scanAccessibility } from '../../src/helpers/a11y';
-import { KNOWN_BUGS, expectBugsToFail, knownBug } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, expectOpenBugsToFail, knownBug } from '../../src/helpers/bugs';
 import { expectNoHorizontalOverflow } from '../../src/helpers/ui';
 import { waitForHydration } from '../../src/helpers/wait';
 
@@ -41,7 +41,7 @@ test.describe('Accessibility · axe WCAG 2.1 AA @a11y', () => {
 
 test.describe('Accessibility · known defects @a11y', () => {
   test('BUG-19 shell controls include their visible text in the accessible name (WCAG 2.5.3)', knownBug(KNOWN_BUGS.BUG19), async ({ page }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     await page.goto('/overview');
     await waitForHydration(page);
     const result = await new AxeBuilder({ page }).withRules(['label-content-name-mismatch']).analyze();
@@ -100,7 +100,7 @@ test.describe('Accessibility · keyboard & focus @a11y', () => {
     });
 
     test('A11Y-006 BUG-20 sign-in reflows at 320 CSS px without horizontal scroll (WCAG 1.4.10)', knownBug(KNOWN_BUGS.BUG20), async ({ page, loginPage }) => {
-      test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+      expectOpenBugsToFail();
       await page.setViewportSize({ width: 320, height: 640 });
       await loginPage.goto();
       await expectNoHorizontalOverflow(page, 2);
@@ -123,7 +123,7 @@ test.describe('Accessibility · keyboard & focus @a11y', () => {
   });
 
   test('A11Y-008 BUG-20 app shell reflows at 320 CSS px (WCAG 1.4.10)', knownBug(KNOWN_BUGS.BUG20), async ({ page, overviewPage }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     await page.setViewportSize({ width: 320, height: 640 });
     await overviewPage.goto();
     await expectNoHorizontalOverflow(page, 4);

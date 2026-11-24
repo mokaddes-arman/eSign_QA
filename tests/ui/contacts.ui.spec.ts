@@ -1,5 +1,5 @@
 import { test, expect } from '../../src/fixtures/test';
-import { KNOWN_BUGS, knownBug, expectBugsToFail } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, knownBug, expectOpenBugsToFail } from '../../src/helpers/bugs';
 import { unlabeledControls } from '../../src/helpers/ui';
 import { uiBaseline } from '../../src/helpers/uiSuite';
 
@@ -15,7 +15,7 @@ test.describe('UI · Contacts', () => {
   });
 
   test('BUG-17 saving without a name flags the field and keeps the dialog open', knownBug(KNOWN_BUGS.BUG17), async ({ contactsPage }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     await contactsPage.goto();
     await contactsPage.openNewContact();
     await contactsPage.emailInput.fill('qa.ui@example.com');

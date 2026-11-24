@@ -1,5 +1,5 @@
 import { test, expect } from '../../src/fixtures/test';
-import { KNOWN_BUGS, knownBug, expectBugsToFail } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, knownBug, expectOpenBugsToFail } from '../../src/helpers/bugs';
 import { expectErrorStyled } from '../../src/helpers/ui';
 import { uiBaseline } from '../../src/helpers/uiSuite';
 
@@ -22,7 +22,7 @@ test.describe('UI · Authentication', () => {
   });
 
   test('BUG-15 registration validation message is shown in the error colour', knownBug(KNOWN_BUGS.BUG15), async ({ registerPage }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     await registerPage.goto();
     await registerPage.createAccountButton.click();
     const message = registerPage.page.getByText(/Name and company are required/);

@@ -1,7 +1,7 @@
 import { test, expect } from '../../src/fixtures/test';
 import { requireData } from '../../src/helpers/precondition';
 import { API } from '../../src/helpers/api';
-import { KNOWN_BUGS, UNIQUENESS_TEMPLATE, knownBug, expectBugsToFail } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, UNIQUENESS_TEMPLATE, knownBug, expectOpenBugsToFail } from '../../src/helpers/bugs';
 import { BLACK, WHITE, expectErrorStyled, expectTextReadableOn, isErrorColor } from '../../src/helpers/ui';
 
 /**
@@ -17,7 +17,7 @@ test.describe('Reported defects — builder, preview and workflow', () => {
   test.describe.configure({ mode: 'default' });
 
   test.beforeEach(async ({ preparePage }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail: defect still open');
+    expectOpenBugsToFail();
     await preparePage.goto();
     await preparePage.continueLatestDraft();
     await preparePage.waitForCanvas();

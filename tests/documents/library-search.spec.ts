@@ -3,7 +3,7 @@ import { requireData, requireEnv } from '../../src/helpers/precondition';
 import type { Page } from '@playwright/test';
 import type { DocumentsPage } from '../../src/pages/DocumentsPage';
 import { API } from '../../src/helpers/api';
-import { KNOWN_BUGS, expectBugsToFail, knownBug } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, expectOpenBugsToFail, knownBug } from '../../src/helpers/bugs';
 
 /*
  * Library search, status filter, sort and empty state — behaviour, not presence:
@@ -125,7 +125,7 @@ test.describe('Documents · search, filter & sort', () => {
   });
 
   test('DOC-004 BUG-23 status filter "Drafts" lists the same envelopes as the Drafts view', knownBug(KNOWN_BUGS.BUG23), async ({ documentsPage, page }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     await documentsPage.openFolder('Drafts');
     await expect(page).toHaveURL(/folder=drafts/);
     const inDraftsView = await shownCount(page);

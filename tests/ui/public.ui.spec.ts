@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import { test, expect } from '../../src/fixtures/test';
-import { KNOWN_BUGS, knownBug, expectBugsToFail } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, knownBug, expectOpenBugsToFail } from '../../src/helpers/bugs';
 import { uiBaseline } from '../../src/helpers/uiSuite';
 
 /** UI checks for the marketing site, as a guest (no session). */
@@ -26,7 +26,7 @@ test.describe('UI · Public site', () => {
   });
 
   test('BUG-13 trust-centre hero has a correctly spaced accessible name', knownBug(KNOWN_BUGS.BUG13), async ({ page }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     await page.goto('/trust', { waitUntil: 'domcontentloaded' });
     const accessible = await page.getByRole('heading', { level: 1 }).first().evaluate((el) => (el.textContent || '').trim());
     expect(accessible, `accessible name is "${accessible}"`).not.toMatch(/eSignProhandles/);

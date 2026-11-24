@@ -1,5 +1,5 @@
 import { test, expect } from '../../src/fixtures/test';
-import { KNOWN_BUGS, knownBug, expectBugsToFail } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, knownBug, expectOpenBugsToFail } from '../../src/helpers/bugs';
 import { uiBaseline } from '../../src/helpers/uiSuite';
 import { API } from '../../src/helpers/api';
 
@@ -56,7 +56,7 @@ test.describe('UI · Billing & plan', () => {
   });
 
   test('BUG-40 add-seats dialog starts at one additional seat', knownBug(KNOWN_BUGS.BUG40), async ({ billingPage }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     await billingPage.goto();
     await billingPage.openAddSeats();
     try {
@@ -67,7 +67,7 @@ test.describe('UI · Billing & plan', () => {
   });
 
   test('BUG-14 change-plan dialog pre-selects the current plan', knownBug(KNOWN_BUGS.BUG14), async ({ billingPage, page }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     await billingPage.goto();
     await billingPage.openChangePlan();
     const selected = billingPage.planDialog

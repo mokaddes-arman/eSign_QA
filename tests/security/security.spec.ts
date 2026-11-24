@@ -3,7 +3,7 @@ import { test, expect } from '../../src/fixtures/test';
 import { requireData, requireEnv } from '../../src/helpers/precondition';
 import { API, FOREIGN_ID, READ_ENDPOINTS } from '../../src/helpers/api';
 import { env } from '../../src/config/env';
-import { KNOWN_BUGS, expectBugsToFail, knownBug } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, expectOpenBugsToFail, knownBug } from '../../src/helpers/bugs';
 
 /*
  * Light, non-destructive security checks (OWASP ASVS L1 / Top 10 smoke) against the
@@ -36,7 +36,7 @@ test.describe('Security · transport & headers @security', () => {
   }
 
   test('SEC-003 BUG-22 responses do not disclose server software versions', knownBug(KNOWN_BUGS.BUG22), async ({ request }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     const h = (await request.get('/login')).headers();
     expect(h['server'] ?? '', 'Server header reveals a version').not.toMatch(/\d+\.\d+/);
     expect(h['x-powered-by'], 'X-Powered-By header present').toBeUndefined();

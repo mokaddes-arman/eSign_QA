@@ -9,6 +9,8 @@ import { test, type TestDetails } from '@playwright/test';
  *
  * KNOWN_BUGS=expect-fail wraps them in `test.fail()` so a pipeline can stay green
  * while the defects are open; a fixed bug then shows up as an unexpected pass.
+ * Record the date in `fixed` once that happens: the test then runs as a normal
+ * regression check (see expectOpenBugsToFail).
  */
 export interface KnownBug {
   /** Stable id used in docs/TEST_CASES.md §15 and bug reports, e.g. "BUG-01". */
@@ -21,6 +23,12 @@ export interface KnownBug {
   expected: string;
   /** Matching test-case id in TEST_CASES.md. */
   caseId: string;
+  /**
+   * ISO date the defect was first seen fixed (reproduction test passed on CI or on retest).
+   * The test then stays as a regression check: it is no longer expected to fail under
+   * KNOWN_BUGS=expect-fail, so a recurrence turns the pipeline red.
+   */
+  fixed?: string;
 }
 
 export const KNOWN_BUGS = {
@@ -30,6 +38,7 @@ export const KNOWN_BUGS = {
     summary: 'Field label/placeholder text is unreadable when the document page has a black background',
     expected: 'Field text keeps ≥ 3:1 contrast on both light and dark document pages',
     caseId: 'PREP-019',
+    fixed: '2026-11-24',
   },
   BUG02: {
     id: 'BUG-02',
@@ -37,6 +46,7 @@ export const KNOWN_BUGS = {
     summary: 'Favouriting a field does not move it to the top of the field palette',
     expected: 'Favourited fields are listed before all other fields in "All fields"',
     caseId: 'PREP-020',
+    fixed: '2026-11-24',
   },
   BUG03: {
     id: 'BUG-03',
@@ -58,6 +68,7 @@ export const KNOWN_BUGS = {
     summary: 'Placeholder text set in the inspector is not shown on the editing canvas',
     expected: 'The canvas field shows its placeholder text while editing',
     caseId: 'PREP-022',
+    fixed: '2026-11-23',
   },
   BUG06: {
     id: 'BUG-06',
@@ -65,6 +76,7 @@ export const KNOWN_BUGS = {
     summary: 'Document-name character-limit error has wrong wording and is not shown in the error colour',
     expected: 'Over-long names are rejected with "…N characters…" wording rendered in the error colour',
     caseId: 'PREP-023',
+    fixed: '2026-11-24',
   },
   BUG07: {
     id: 'BUG-07',
@@ -79,6 +91,7 @@ export const KNOWN_BUGS = {
     summary: 'Missing-recipient error has wrong wording and wrong (warning) colour',
     expected: 'A missing recipient e-mail is a blocking error shown in the error colour with clear wording',
     caseId: 'WF-011',
+    fixed: '2026-11-24',
   },
   BUG09: {
     id: 'BUG-09',
@@ -102,6 +115,7 @@ export const KNOWN_BUGS = {
     summary: 'Submitting an empty support ticket gives no validation feedback (FEATURES O9)',
     expected: 'Required fields are flagged with an error message in the error colour',
     caseId: 'SUP-004',
+    fixed: '2026-11-22',
   },
   BUG12: {
     id: 'BUG-12',
@@ -109,6 +123,7 @@ export const KNOWN_BUGS = {
     summary: 'Organization section heading reads "People1" — count not separated (FEATURES O7)',
     expected: 'Heading reads "People" with the count visually and audibly separated',
     caseId: 'ACC-014',
+    fixed: '2026-11-22',
   },
   BUG13: {
     id: 'BUG-13',
@@ -116,6 +131,7 @@ export const KNOWN_BUGS = {
     summary: 'Trust-centre hero accessible name reads "eSignProhandles" (FEATURES O8)',
     expected: 'Accessible name keeps the space: "eSignPro handles"',
     caseId: 'AUTH-021',
+    fixed: '2026-11-22',
   },
   BUG14: {
     id: 'BUG-14',
@@ -123,6 +139,7 @@ export const KNOWN_BUGS = {
     summary: 'Change-plan dialog pre-selects Enterprise for a Free workspace (FEATURES O6)',
     expected: 'The current plan (Free) is pre-selected',
     caseId: 'BIL-002',
+    fixed: '2026-11-22',
   },
   /* Found by the new UI layer on 16 Nov 2026. */
   BUG15: {
@@ -131,6 +148,7 @@ export const KNOWN_BUGS = {
     summary: 'Registration validation error ("Name and company are required") is shown in neutral grey, not the error colour',
     expected: 'Form errors use the error colour, consistently with field errors',
     caseId: 'AUTH-004',
+    fixed: '2026-11-22',
   },
   BUG16: {
     id: 'BUG-16',
@@ -145,6 +163,7 @@ export const KNOWN_BUGS = {
     summary: 'Saving a new contact without a name does nothing — no message, field not flagged',
     expected: 'Full name is flagged as required with a visible error',
     caseId: 'CON-005',
+    fixed: '2026-11-22',
   },
   /* Found by the coverage-gap tests on 17 Nov 2026 (qa-reports/QA_Bug_Report.xlsx). */
   BUG19: {
@@ -160,6 +179,7 @@ export const KNOWN_BUGS = {
     summary: 'Reflow (WCAG 1.4.10): sign-in and app shell are 360 px wide, so a 320 px viewport scrolls horizontally',
     expected: 'Content reflows to 320 CSS px without horizontal scrolling',
     caseId: 'A11Y-006',
+    fixed: '2026-11-22',
   },
   BUG21: {
     id: 'BUG-21',
@@ -181,6 +201,7 @@ export const KNOWN_BUGS = {
     summary: 'Documents status filter "Drafts" returns 0 documents while the "Drafts" view lists every prepared draft (6)',
     expected: 'Filter by status = Drafts lists the same envelopes as the Drafts view',
     caseId: 'DOC-004',
+    fixed: '2026-11-22',
   },
   BUG24: {
     id: 'BUG-24',
@@ -202,6 +223,7 @@ export const KNOWN_BUGS = {
     summary: 'Archive view offers no "Unarchive": the row menu still says "Archive", and choosing it silently unarchives the document',
     expected: 'Archived documents offer an explicit "Unarchive" (or "Restore") action, as the archive confirmation promises',
     caseId: 'DOC-013',
+    fixed: '2026-11-23',
   },
   BUG30: {
     id: 'BUG-30',
@@ -209,6 +231,7 @@ export const KNOWN_BUGS = {
     summary: 'Trash has no Restore: neither the row menu nor the bulk bar can bring a deleted document back, although "Move to Trash" says it can be restored',
     expected: 'Documents in Trash offer "Restore", which returns them to the library',
     caseId: 'DOC-013',
+    fixed: '2026-11-23',
   },
   BUG31: {
     id: 'BUG-31',
@@ -223,6 +246,7 @@ export const KNOWN_BUGS = {
     summary: 'Folder names are not unique: "New folder" creates a second folder with an existing name',
     expected: 'A duplicate folder name is rejected with an inline error and no folder is created',
     caseId: 'DOC-008',
+    fixed: '2026-11-23',
   },
   BUG33: {
     id: 'BUG-33',
@@ -230,6 +254,7 @@ export const KNOWN_BUGS = {
     summary: 'Overview "Envelope volume · last 12 weeks" skips a week number (W34, W35, W36, W38 … W46) — the weeks are not consecutive',
     expected: 'Twelve consecutive ISO weeks ending with the latest week',
     caseId: 'OVR-003',
+    fixed: '2026-11-22',
   },
   BUG34: {
     id: 'BUG-34',
@@ -347,19 +372,35 @@ export function knownBug(bug: KnownBug, extraTags: string[] = []): TestDetails {
       { type: 'summary', description: bug.summary },
       { type: 'expected', description: bug.expected },
       { type: 'case', description: bug.caseId },
+      ...(bug.fixed ? [{ type: 'fixed', description: bug.fixed }] : []),
     ],
   };
 }
 
 export const expectBugsToFail = process.env.KNOWN_BUGS === 'expect-fail';
 
+const BUGS_BY_ID: ReadonlyMap<string, KnownBug> = new Map(Object.values(KNOWN_BUGS as Record<string, KnownBug>).map((b) => [b.id, b]));
+
 /**
- * Flow checkpoints that hit an open known bug. In strict mode (default) they are
- * asserted with expect.soft; under KNOWN_BUGS=expect-fail they are skipped (the
- * dedicated @bug test already tracks the defect) and recorded as an annotation.
+ * Call at the start of a known-bug test (or its beforeEach). Under KNOWN_BUGS=expect-fail
+ * the test is expected to fail while any bug it is annotated with (knownBug()) is still open.
+ * Once every one of them has a `fixed` date, it runs as a normal regression check.
+ */
+export function expectOpenBugsToFail(): void {
+  const ids = test.info().annotations.filter((a) => a.type === 'bug').map((a) => a.description);
+  /* No bug annotation (not declared with knownBug()): keep expecting failure, as before. */
+  const open = ids.length ? ids.filter((id) => !BUGS_BY_ID.get(id ?? '')?.fixed) : ['(unannotated)'];
+  test.fail(expectBugsToFail && open.length > 0, `KNOWN_BUGS=expect-fail: ${open.join(', ')} still open`);
+}
+
+/**
+ * Flow checkpoints that hit a known bug. In strict mode (default) they are asserted
+ * with expect.soft; under KNOWN_BUGS=expect-fail they are skipped while the bug is open
+ * (the dedicated @bug test already tracks it) and recorded as an annotation. A fixed
+ * bug's checkpoint is always asserted.
  */
 export async function bugCheckpoint(bug: KnownBug, check: () => Promise<unknown>): Promise<void> {
-  if (expectBugsToFail) {
+  if (expectBugsToFail && !bug.fixed) {
     test.info().annotations.push({ type: 'skipped-checkpoint', description: `${bug.id}: ${bug.summary}` });
     return;
   }

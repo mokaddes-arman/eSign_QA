@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import type { Locator, Page } from '@playwright/test';
 import { test, expect } from '../../src/fixtures/test';
 import { API } from '../../src/helpers/api';
-import { KNOWN_BUGS, expectBugsToFail, knownBug } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, expectOpenBugsToFail, knownBug } from '../../src/helpers/bugs';
 import { BUILDER_DRAFT } from '../../src/helpers/builderDraft';
 import { clickUntilVisible } from '../../src/helpers/wait';
 import type { PreparePage } from '../../src/pages/PreparePage';
@@ -179,7 +179,7 @@ test.describe('Builder behaviour', () => {
   });
 
   test('BUG-43 a recipient renamed in Manage recipients keeps that name on the cards and in the workflow', knownBug(KNOWN_BUGS.BUG43, ['@data']), async ({ preparePage, page }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     const name = 'QA Second';
     const draftId = preparePage.documentIdFromUrl();
     const keep = (await apiRecipients(page, draftId)).map((r) => r.id);
@@ -293,7 +293,7 @@ test.describe('Builder behaviour', () => {
   });
 
   test('BUG-47 a recipient added from contacts takes the contact’s name', knownBug(KNOWN_BUGS.BUG47, ['@data']), async ({ preparePage, page }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     const draftId = preparePage.documentIdFromUrl();
     const keep = (await apiRecipients(page, draftId)).map((r) => r.id);
     try {

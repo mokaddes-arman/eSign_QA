@@ -1,5 +1,5 @@
 import { test, expect } from '../../src/fixtures/test';
-import { KNOWN_BUGS, expectBugsToFail, knownBug } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, expectOpenBugsToFail, knownBug } from '../../src/helpers/bugs';
 import { clickUntilVisible, waitForHydration } from '../../src/helpers/wait';
 
 /* Public surfaces are guest-only: never reuse the saved session. */
@@ -67,7 +67,7 @@ test.describe('Public site', () => {
   });
 
   test('BUG-35 reset-link lifetime is the same before and after sending', knownBug(KNOWN_BUGS.BUG35), async ({ page }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     await page.goto('/login/forgot');
     await waitForHydration(page);
     const minutes = (text: string) => Number(text.match(/(\d+) minutes/)?.[1]);

@@ -30,7 +30,10 @@ export async function pdfLoads(page: Page, id: string): Promise<boolean> {
 
 /** Id of the fixed builder draft, uploading and naming a new one if none with a loadable PDF exists. */
 export async function ensureBuilderDraft(page: Page): Promise<string> {
-  const docs = (await (await page.request.get(API.documents)).json()) as ApiDocument[];
+  const response = await page.request.get(API.documents);
+  /* A signed-out session (e.g. superseded by another sign-in) answers with an error object, not a list. */
+  expect(response.ok(), `GET ${API.documents} answered ${response.status()} — is the saved session still signed in?`).toBe(true);
+  const docs = (await response.json()) as ApiDocument[];
   const candidates = docs
     .filter((d) => d.title === BUILDER_DRAFT && !d.is_template && !d.deleted_at && !d.archived_at)
     .sort((a, b) => b.updated_at.localeCompare(a.updated_at));

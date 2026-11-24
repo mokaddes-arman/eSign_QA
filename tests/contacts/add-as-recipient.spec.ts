@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 import { test, expect } from '../../src/fixtures/test';
 import { API } from '../../src/helpers/api';
-import { KNOWN_BUGS, expectBugsToFail, knownBug } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, expectOpenBugsToFail, knownBug } from '../../src/helpers/bugs';
 import { ensureContact } from '../../src/helpers/contacts';
 import { clickUntilVisible, waitForHydration } from '../../src/helpers/wait';
 
@@ -38,7 +38,7 @@ async function removeContactFromDrafts(page: Page, contactId: string) {
 
 test.describe('Contacts · add as recipient @data', () => {
   test('BUG-31 CON-008 "Add as recipient" lets the user see which envelope the contact joins', knownBug(KNOWN_BUGS.BUG31, ['@data']), async ({ contactsPage, page }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     const id = await ensureContact(page, contactsPage, { fullName: 'QA Contact (recipient check)', email: 'qa.contact.recipient-check@example.com', jobTitle: 'QA Recipient' });
     try {
       await page.goto(`/contacts/${id}`, { waitUntil: 'domcontentloaded' });

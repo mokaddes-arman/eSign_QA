@@ -353,6 +353,23 @@ BUGS += [
      "environment": ENV_CHROMIUM + " (Team plan)", "found": "Partial-coverage upgrade 23 Nov 2026", "remarks": "Reproduction: tests/documents/builder-behaviour.spec.ts (BUG-47, @data; removes the recipient)."},
 ]
 
+# Defects no longer reproduced: date first seen fixed + evidence. Mirrors `fixed` in
+# src/helpers/bugs.ts, where the reproduction tests now run as regression checks.
+_NIGHTLY_22 = "CI nightly 22 Nov 2026 (run 44977899186): reproduction test passed unexpectedly under KNOWN_BUGS=expect-fail; still passing on 23 and 24 Nov and in a strict local run on 24 Nov."
+_NIGHTLY_24 = "CI nightly 24 Nov 2026 (run 45315378211): reproduction test passed unexpectedly under KNOWN_BUGS=expect-fail; confirmed by the push run 45415074167 and a strict local run on 24 Nov. (Earlier nightlies could not tell: the builder draft had no PDF, BUG-34.)"
+_RETEST_23 = "Retest passed 23 Nov 2026 (see remarks)."
+FIXED = {
+    **{b: ("22 Nov 2026", _NIGHTLY_22) for b in ("BUG-11", "BUG-12", "BUG-13", "BUG-14", "BUG-15", "BUG-17", "BUG-20", "BUG-23", "BUG-33")},
+    **{b: ("23 Nov 2026", _RETEST_23) for b in ("BUG-05", "BUG-29", "BUG-30", "BUG-32")},
+    **{b: ("24 Nov 2026", _NIGHTLY_24) for b in ("BUG-01", "BUG-02", "BUG-06", "BUG-08")},
+}
+for _b in BUGS:
+    if _b["id"] in FIXED:
+        _date, _evidence = FIXED[_b["id"]]
+        _b["status"] = "Resolved"
+        _b["fixed"] = _date
+        _b["remarks"] = f"FIXED {_date} — {_evidence} " + _b.get("remarks", "")
+
 INITIAL_IMPL = {
     "DOC-002": "P",   # views were presence-only
     "DOC-006": "P",   # sort only checked the select value

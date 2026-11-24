@@ -1,5 +1,5 @@
 import { test, expect } from '../../src/fixtures/test';
-import { KNOWN_BUGS, expectBugsToFail, knownBug } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, expectOpenBugsToFail, knownBug } from '../../src/helpers/bugs';
 import { waitForHydration } from '../../src/helpers/wait';
 import { API } from '../../src/helpers/api';
 import { requireData } from '../../src/helpers/precondition';
@@ -194,7 +194,7 @@ test.describe('Account · change password (server answer mocked)', () => {
   });
 
   test('BUG-41 change password enforces its stated minimum and keeps the dialog open on rejection', knownBug(KNOWN_BUGS.BUG41), async ({ profilePage }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     const dialog = profilePage.changePasswordDialog;
     const submit = dialog.getByRole('button', { name: 'Change password' });
     const input = await continueToNewPassword(dialog);

@@ -1,5 +1,5 @@
 import { test, expect } from '../../src/fixtures/test';
-import { KNOWN_BUGS, knownBug, expectBugsToFail } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, knownBug, expectOpenBugsToFail } from '../../src/helpers/bugs';
 import { expectErrorStyled, unlabeledControls } from '../../src/helpers/ui';
 import { uiBaseline } from '../../src/helpers/uiSuite';
 
@@ -15,7 +15,7 @@ test.describe('UI · Support', () => {
   });
 
   test('BUG-11 empty ticket submit explains what is missing', knownBug(KNOWN_BUGS.BUG11), async ({ supportPage, page }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     await supportPage.goto();
     await supportPage.openNewTicket();
     await supportPage.submitButton.click();

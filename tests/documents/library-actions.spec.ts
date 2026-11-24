@@ -1,7 +1,7 @@
 import { test, expect } from '../../src/fixtures/test';
 import { API } from '../../src/helpers/api';
 import { requireData } from '../../src/helpers/precondition';
-import { KNOWN_BUGS, expectBugsToFail, knownBug } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, expectOpenBugsToFail, knownBug } from '../../src/helpers/bugs';
 import { clickUntilVisible } from '../../src/helpers/wait';
 
 /* Read-only checks of library controls: menus are opened and dismissed, nothing is chosen. */
@@ -87,7 +87,7 @@ test.describe('Documents library actions', () => {
   });
 
   test('BUG-46 DOC-014 a document can be favourited and then appears under Favourites', knownBug(KNOWN_BUGS.BUG46), async ({ page, request }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     requireData(((await (await request.get(API.documents)).json()) as unknown[]).length > 0, 'the workspace has no documents (API)');
     /* Look everywhere a favourite control could live: the row, the grid card, the row menu. */
     const favourite = /favou?rite|^star\b|add to favou?rites/i;

@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import type { Page } from '@playwright/test';
 import { test, expect } from '../../src/fixtures/test';
 import { API } from '../../src/helpers/api';
-import { KNOWN_BUGS, UNIQUENESS_FOLDER, bugCheckpoint, expectBugsToFail, knownBug } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, UNIQUENESS_FOLDER, bugCheckpoint, expectOpenBugsToFail, knownBug } from '../../src/helpers/bugs';
 import { clickUntilVisible, waitForHydration } from '../../src/helpers/wait';
 import { requireData } from '../../src/helpers/precondition';
 
@@ -151,7 +151,7 @@ test.describe('Flow · Library lifecycle @data', () => {
   });
 
   test('BUG-29 archived documents offer Unarchive', knownBug(KNOWN_BUGS.BUG29, ['@data']), async ({ page }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     const id = await duplicateNewestDraft(page);
     try {
       await rowAction(page, '', id, 'Archive', 'Archive');
@@ -165,7 +165,7 @@ test.describe('Flow · Library lifecycle @data', () => {
   });
 
   test('BUG-30 Trash offers Restore', knownBug(KNOWN_BUGS.BUG30), async ({ page, documentsPage }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     /* Inspects a document already in Trash; if Trash is empty, trashes a copy first (erased after). */
     await page.goto('/documents?folder=trash');
     await waitForHydration(page);
@@ -188,7 +188,7 @@ test.describe('Flow · Library lifecycle @data', () => {
   });
 
   test('BUG-32 DOC-008 a duplicate folder name is rejected', knownBug(KNOWN_BUGS.BUG32, ['@data']), async ({ page, documentsPage }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     await documentsPage.goto();
     const links = page.getByRole('navigation', { name: 'Folders' }).getByRole('link', { name: UNIQUENESS_FOLDER, exact: true });
     /* The fixed folder is created once; later runs try to create it again. */

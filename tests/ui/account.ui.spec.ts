@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import { test, expect } from '../../src/fixtures/test';
-import { KNOWN_BUGS, knownBug, expectBugsToFail } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, knownBug, expectOpenBugsToFail } from '../../src/helpers/bugs';
 import { unlabeledControls } from '../../src/helpers/ui';
 import { uiBaseline } from '../../src/helpers/uiSuite';
 import { waitForHydration } from '../../src/helpers/wait';
@@ -49,7 +49,7 @@ test.describe('UI · Account & settings', () => {
   });
 
   test('BUG-12 organization headings separate the label from the count', knownBug(KNOWN_BUGS.BUG12), async ({ page }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     await page.goto('/account/organization', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
     /* The member count is rendered after the people list loads. Reading the headings

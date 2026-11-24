@@ -1,6 +1,6 @@
 import { test, expect } from '../../src/fixtures/test';
 import { API } from '../../src/helpers/api';
-import { KNOWN_BUGS, expectBugsToFail, knownBug } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, expectOpenBugsToFail, knownBug } from '../../src/helpers/bugs';
 import { textsIn } from '../../src/helpers/ui';
 
 test.describe('Overview dashboard @smoke', () => {
@@ -124,7 +124,7 @@ test.describe('Overview dashboard @smoke', () => {
   });
 
   test('BUG-33 envelope volume lists 12 consecutive weeks', knownBug(KNOWN_BUGS.BUG33), async ({ page }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     const weeks = (await page.getByRole('table', { name: /Envelopes created per week/ }).getByRole('rowheader').allInnerTexts()).map((w) => Number(w.replace(/\D/g, '')));
     expect(weeks).toHaveLength(12);
     /* Consecutive ISO weeks (W52/W53 → W1 wraps at the year boundary). */

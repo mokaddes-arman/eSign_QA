@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 import { test, expect } from '../fixtures/test';
 import { expectReadableInDarkMode, expectResponsive, expectStandardUi, trackPageErrors } from './ui';
 import { waitForHydration } from './wait';
-import { expectBugsToFail, knownBug, type KnownBug } from './bugs';
+import { expectOpenBugsToFail, knownBug, type KnownBug } from './bugs';
 
 export interface UiRoute {
   /** Short name used in the test title, e.g. "Contacts". */
@@ -42,7 +42,7 @@ export function uiBaseline(routes: UiRoute[]): void {
   for (const route of routes) {
     const details = route.bug ? knownBug(route.bug) : {};
     test(`${route.name} meets the UI baseline`, details, async ({ page }, testInfo) => {
-      test.fail(Boolean(route.bug) && expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+      expectOpenBugsToFail();
       const errors = trackPageErrors(page);
       await open(page, route);
       await expectStandardUi(page, testInfo, errors, { landmarks: route.landmarks });

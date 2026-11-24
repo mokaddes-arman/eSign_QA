@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import { test, expect } from '../../src/fixtures/test';
-import { KNOWN_BUGS, expectBugsToFail, knownBug } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, expectOpenBugsToFail, knownBug } from '../../src/helpers/bugs';
 import { clickUntilVisible, waitForHydration } from '../../src/helpers/wait';
 import type { PreparePage } from '../../src/pages/PreparePage';
 
@@ -69,7 +69,7 @@ test.describe('Flow · Signing defaults @flow', () => {
   });
 
   test('BUG-42 the signing dialog opens on the saved default signature', knownBug(KNOWN_BUGS.BUG42, ['@data']), async ({ preparePage, page }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     const remove = await adoptTypedSignature(page);
     try {
       const dialog = await openSigningDialog(preparePage, page);

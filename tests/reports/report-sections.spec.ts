@@ -4,7 +4,7 @@ import { test, expect } from '../../src/fixtures/test';
 import { waitForHydration } from '../../src/helpers/wait';
 import { API } from '../../src/helpers/api';
 import { requireData } from '../../src/helpers/precondition';
-import { KNOWN_BUGS, expectBugsToFail, knownBug } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, expectOpenBugsToFail, knownBug } from '../../src/helpers/bugs';
 import { textsIn } from '../../src/helpers/ui';
 
 type ApiDocument = { id: string; title: string; status: string; created_at: string; recipients_total: number; recipients_completed: number };
@@ -100,7 +100,7 @@ test.describe('Report sections', () => {
   });
 
   test('BUG-37 report status column matches the envelope status', knownBug(KNOWN_BUGS.BUG37), async ({ page }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     const { docs } = await apiData(page);
     requireData(docs.length > 0, 'no envelope in the last 12 months (API)');
     await page.goto(`/reports?section=documents&range=${RANGE}`);
@@ -176,7 +176,7 @@ test.describe('Report sections', () => {
   });
 
   test('BUG-45 REP-010 invite figures count only envelopes that were sent', knownBug(KNOWN_BUGS.BUG45), async ({ page }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     const docs = ((await (await page.request.get(API.documents)).json()) as { sent_at: string | null; completed_at: string | null; created_at: string }[])
       .filter((d) => Date.now() - Date.parse(d.created_at) <= YEAR_MS);
     const sent = docs.filter((d) => d.sent_at).length;

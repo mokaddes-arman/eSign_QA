@@ -1,6 +1,6 @@
 import { test, expect } from '../../src/fixtures/test';
 import { API, READ_ENDPOINTS, percentile, timedGet } from '../../src/helpers/api';
-import { KNOWN_BUGS, expectBugsToFail, knownBug } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, expectOpenBugsToFail, knownBug } from '../../src/helpers/bugs';
 
 /*
  * Performance smoke (NF-012) — single-user budgets measured in the browser via the
@@ -45,7 +45,7 @@ test.describe('Performance · page load budgets @perf', () => {
     test.use({ storageState: { cookies: [], origins: [] } });
     for (const path of ['/', '/login', '/pricing']) {
       test(`PERF-001 ${path} loads within budget`, knownBug(KNOWN_BUGS.BUG24), async ({ page }, testInfo) => {
-        test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+        expectOpenBugsToFail();
         const t = await measure(page, path);
         await record(testInfo, `timing ${path}`, t);
         expect.soft(t.ttfb, 'TTFB').toBeLessThanOrEqual(BUDGET.ttfb);
@@ -57,7 +57,7 @@ test.describe('Performance · page load budgets @perf', () => {
 
   for (const path of ['/overview', '/documents', '/contacts', '/reports', '/account/billing']) {
     test(`PERF-002 ${path} loads within budget`, knownBug(KNOWN_BUGS.BUG24), async ({ page }, testInfo) => {
-      test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+      expectOpenBugsToFail();
       const t = await measure(page, path);
       await record(testInfo, `timing ${path}`, t);
       expect(page.url(), 'still signed in').not.toMatch(/\/login/);

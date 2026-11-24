@@ -3,7 +3,7 @@ import { optionLabels } from '../../src/helpers/ui';
 import { API } from '../../src/helpers/api';
 import { clickUntilVisible, waitForHydration } from '../../src/helpers/wait';
 import { requireData } from '../../src/helpers/precondition';
-import { KNOWN_BUGS, expectBugsToFail, knownBug } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, expectOpenBugsToFail, knownBug } from '../../src/helpers/bugs';
 
 /* Read-only checks of the account sub-pages and the notifications centre. */
 test.describe('Account settings pages', () => {
@@ -114,7 +114,7 @@ test.describe('Account settings pages', () => {
   });
 
   test('BUG-38 organization card shows the seats Billing charges for', knownBug(KNOWN_BUGS.BUG38), async ({ page }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     const usage = await (await page.request.get(API.billingUsage)).json();
     const seats = usage.limits.max_documents_per_month.seats as number;
     await page.goto('/account/organization');
@@ -135,7 +135,7 @@ test.describe('Account settings pages', () => {
   });
 
   test('BUG-39 UF-42 inviting a member lists the pending invitation', knownBug(KNOWN_BUGS.BUG39, ['@data']), async ({ page }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     /* Fixed example.com address: no mailbox receives it, and reruns reuse one invitation. */
     const invitee = 'qa.invite.check@example.com';
     await page.goto('/account/organization');

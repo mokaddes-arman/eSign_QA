@@ -2,7 +2,7 @@ import { test, expect } from '../../src/fixtures/test';
 import { clickUntilVisible, waitForHydration } from '../../src/helpers/wait';
 import { HYDRATION_ERROR } from '../../src/helpers/ui';
 import { API } from '../../src/helpers/api';
-import { KNOWN_BUGS, expectBugsToFail, knownBug } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, expectOpenBugsToFail, knownBug } from '../../src/helpers/bugs';
 
 test.describe('Authenticated navigation', () => {
   test('NAV-001 exposes every module in the main navigation and each link opens it @smoke', async ({
@@ -92,7 +92,7 @@ test.describe('Authenticated navigation', () => {
   });
 
   test('BUG-36 product tour names only the sidebar areas that exist', knownBug(KNOWN_BUGS.BUG36), async ({ page, overviewPage, navigation }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     await overviewPage.goto();
     await navigation.open();
     const sections = (await navigation.nav.getByRole('navigation', { name: 'Sections' }).getByRole('link').allInnerTexts()).map((t) => t.trim());
@@ -186,7 +186,7 @@ test.describe('Platform resilience', () => {
   });
 
   test('BUG-44 NF-010 navigating while offline keeps the app with a notice and recovers', knownBug(KNOWN_BUGS.BUG44), async ({ page, context, contactsPage }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     await contactsPage.goto();
     try {
       await context.setOffline(true);

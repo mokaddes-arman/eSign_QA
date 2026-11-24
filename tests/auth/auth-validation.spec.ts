@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import { test, expect } from '../../src/fixtures/test';
-import { KNOWN_BUGS, expectBugsToFail, knownBug } from '../../src/helpers/bugs';
+import { KNOWN_BUGS, expectOpenBugsToFail, knownBug } from '../../src/helpers/bugs';
 
 /* Guest-only surfaces: never reuse the saved session. */
 test.use({ storageState: { cookies: [], origins: [] } });
@@ -53,7 +53,7 @@ test.describe('Authentication · registration validation', () => {
   });
 
   test('AUTH-026 BUG-21 password length boundary: 11 characters is not rated Strong', knownBug(KNOWN_BUGS.BUG21), async ({ registerPage, page }) => {
-    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    expectOpenBugsToFail();
     const attempted = blockWrites(page);
     await registerPage.goto();
     await registerPage.passwordInput.fill('Abcdefgh1!x'); /* 11 chars, every class */
@@ -76,7 +76,7 @@ test.describe('Authentication · registration validation', () => {
     ['no symbol', 'Abcdefgh1xyzqw'],
   ] as const) {
     test(`AUTH-027 BUG-21 password with ${label} is not rated Strong`, knownBug(KNOWN_BUGS.BUG21), async ({ registerPage, page }) => {
-      test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+      expectOpenBugsToFail();
       await registerPage.goto();
       await registerPage.passwordInput.fill(pwd);
       await expect(meter(page)).toBeVisible();

@@ -279,6 +279,16 @@ Each defect has one test that asserts the **correct** behaviour: it fails while 
 defect exists and passes once fixed. They are tagged `@bug` and listed on the dashboard's
 **Known bugs** tab (`open` = still reproduces). Registry: `src/helpers/bugs.ts`.
 CI runs them with `KNOWN_BUGS=expect-fail`, so a fixed bug shows up as an unexpected pass.
+Once that happens the date goes into the bug's `fixed` field; its test then runs as an
+ordinary regression check (no longer expected to fail), so a recurrence turns CI red.
+
+**Fixed** (reproduction test passes; kept as regression checks):
+
+| Fixed | Bugs | Evidence |
+|-------|------|----------|
+| 22 Nov 2026 | BUG-11, 12, 13, 14, 15, 17, 20, 23, 33 | First unexpected pass on the CI nightly of 22 Nov (run 44977899186); still passing on 23 and 24 Nov and in a strict local run on 24 Nov |
+| 23 Nov 2026 | BUG-05, 29, 30, 32 | Retest on 23 Nov (BUG-05 on a Text Input; Archive offers Unarchive; Trash offers Restore; duplicate folder names rejected) |
+| 24 Nov 2026 | BUG-01, 02, 06, 08 | First unexpected pass on the CI nightly of 24 Nov (run 45315378211), the first run whose builder draft had a loadable PDF (BUG-34); confirmed by the push run and a strict local run |
 
 | Bug | Sev | Summary | Found | Case | Reproduction | Observed on 16 Nov 2026 |
 |-----|-----|---------|-------|------|--------------|--------------------------|
