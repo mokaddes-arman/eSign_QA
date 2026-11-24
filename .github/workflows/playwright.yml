@@ -5,8 +5,14 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # The same workflow lives in two repos (mokaddes-voicepro/eSign_QA and mokaddes-arman/eSign_QA)
+  # that share ONE test account with a single active session (TEST_PLAN R17). Each repo runs
+  # only its own nightly slot (see the job `if:`), so the two never overlap:
+  #   02:00 UTC — mokaddes-voicepro/eSign_QA     04:00 UTC — mokaddes-arman/eSign_QA
+  # Pushes are made to voicepro first and to arman only after voicepro's CI has finished.
   schedule:
     - cron: '0 2 * * *'
+    - cron: '0 4 * * *'
   workflow_dispatch:
 
 permissions:
@@ -41,6 +47,11 @@ env:
 jobs:
   chromium:
     name: Chromium — smoke on PR, full otherwise
+    # Scheduled runs: only the slot that belongs to this repo (see `on.schedule`).
+    if: >-
+      github.event_name != 'schedule' ||
+      (github.repository == 'mokaddes-voicepro/eSign_QA' && github.event.schedule == '0 2 * * *') ||
+      (github.repository == 'mokaddes-arman/eSign_QA' && github.event.schedule == '0 4 * * *')
     runs-on: ubuntu-latest
     timeout-minutes: 90
 
@@ -148,7 +159,8 @@ jobs:
   cross-browser:
     name: ${{ matrix.browser }} — smoke (schedule / manual)
     needs: chromium
-    if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    # `needs.chromium.result != 'skipped'`: not on the other repo's nightly slot.
+    if: always() && needs.chromium.result != 'skipped' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     timeout-minutes: 90
     strategy:
