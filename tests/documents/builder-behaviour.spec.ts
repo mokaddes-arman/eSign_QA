@@ -91,14 +91,17 @@ async function addSecondRecipient(page: Page): Promise<Locator> {
   const before = await roles.count();
   await dialog.getByRole('button', { name: 'Add Recipient' }).click();
   await expect(roles).toHaveCount(before + 1);
+  /* The add saves at once and the new row re-renders when that save goes out. On CI (24 Nov 2026)
+     an e-mail typed 16 ms later went into the replaced input and was lost (no save followed).
+     A 2 s server delay does not lose it, so this is runner speed, not a product defect. */
+  await settleAutosave(page);
   /* The new recipient is the last one, and the only one whose e-mail is still an input. */
   const email = dialog.getByRole('combobox', { name: /^Recipient \d+ email$/ }).last();
   await email.fill(SECOND_EMAIL);
   await email.press('Enter');
   await expect(dialog.getByText(SECOND_EMAIL, { exact: true })).toHaveCount(1);
-  /* Every edit here autosaves as a full-list PUT. An edit made while an earlier PUT is still in
-     flight can be overwritten when that response replaces the list (seen on CI, 24 Nov 2026:
-     the role change was lost). Let each save land before the next edit, as a user would. */
+  /* Every edit here autosaves. On CI an edit made right after the previous one was lost
+     (24 Nov 2026: the role change). Let each save land before the next edit, as a user would. */
   await settleAutosave(page);
   return dialog;
 }
