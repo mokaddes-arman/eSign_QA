@@ -11,6 +11,8 @@ export const API = {
   documents: '/api/proxy/documents',
   document: (id: string) => `/api/proxy/documents/${id}`,
   contacts: '/api/proxy/contacts',
+  templates: '/api/proxy/templates',
+  folders: '/api/proxy/folders',
   billingUsage: '/api/proxy/billing/usage',
   webhooks: '/api/proxy/webhooks',
   webhookEventTypes: '/api/proxy/webhooks/event-types',

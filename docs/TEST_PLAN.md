@@ -267,7 +267,7 @@ mid-run. Resume after a fresh session is saved and data is cleaned; re-run `@smo
 | R16 | Template clean-up impossible while BUG-10 is open | High | Low | Fixed template name caps pollution at 2 templates; delete them once BUG-10 is fixed |
 | R17 | **Single active session per account** (FEATURES O12) | High | High | Any sign-in during a run (UF-05, `auth:save`, a teammate, a second CI job) signs out the shared session and every later test lands on `/login?reason=superseded`. `BasePage.goto()` now fails fast with a clear message. UF-05 is opt-in (`RUN_LOGIN_FLOW=true`, run alone). CI keeps `concurrency` per ref; never run two suites against the account at once. A dedicated CI account would remove the risk |
 | R18 | Debounced autosave (FEATURES O13) | Medium | Low | Flows wait for network idle before reloading or leaving the builder |
-| R19 | Firefox tab crash ("Page crashed") on some Playwright calls: `locator('option').allTextContents()`, and `getByRole('term')` inside a `role=region` locator | Medium | Medium | Read `<option>` labels with `optionLabels()` (one evaluate on the select); read `<dt>/<dd>` with CSS. Found 20 Nov 2026 |
+| R19 | Firefox tab crash ("Page crashed") on some Playwright calls: `locator('option').allTextContents()`, and `getByRole('term')` inside a `role=region` locator, and `allInnerTexts()` over many role-located elements (summary-card paragraphs, table cells) | Medium | Medium | Read `<option>` labels with `optionLabels()` (one evaluate on the select); read `<dt>/<dd>` with CSS; read many texts with `textsIn(root, selector)` (one evaluate). Found 20 Nov 2026, extended 23 Nov |
 
 ## 12. Defect management
 

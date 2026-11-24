@@ -20,8 +20,10 @@ export class RegisterPage extends BasePage {
   readonly emailInput = this.page.getByRole('textbox', { name: 'Work email' });
   readonly passwordInput = this.page.getByRole('textbox', { name: 'Password' });
   readonly showPasswordButton = this.healButton('Show password', false);
+  /* "Use 12+ characters…", or a verdict with a reason: "Weak — add length", "Almost — use 12+
+     characters", "Excellent — meets enterprise policy". */
   readonly passwordHint = this.page.getByText(
-    /Use 12\+ characters|^Weak$|^Medium$|^Strong$|^Excellent$/i,
+    /Use 12\+ characters|^(Weak|Medium|Almost|Strong|Excellent)\b/i,
   );
   readonly formStatus = this.page.getByRole('status');
   readonly companyTypeSelect = this.page.getByRole('combobox', { name: 'Company type' });

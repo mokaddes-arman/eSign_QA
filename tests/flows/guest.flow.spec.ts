@@ -4,6 +4,48 @@ import { requireData, requireEnv } from '../../src/helpers/precondition';
 import { env } from '../../src/config/env';
 import { LoginPage } from '../../src/pages/LoginPage';
 
+/**
+ * SEC-022 — the account allows ONE active session: a new sign-in signs the previous one out
+ * (it is redirected to /login?reason=superseded on its next page). Runs in `chromium-account`;
+ * the new session is saved back so the rest of the run stays signed in.
+ */
+test.describe('Security · single active session', () => {
+  test('SEC-022 a new sign-in signs out the previous session @security', async ({ browser, baseURL }) => {
+    requireEnv('ESIGN_EMAIL', 'sign in');
+    requireEnv('ESIGN_PASSWORD', 'sign in');
+    requireData(fs.existsSync(env.authStatePath), 'no saved session file (run npm run auth:save)');
+    const saved = JSON.parse(fs.readFileSync(env.authStatePath, 'utf8'));
+    const oldSession = await browser.newContext({ baseURL, storageState: saved });
+    /* Only the trusted-device cookies, so the password login skips the e-mail OTP. */
+    const newSession = await browser.newContext({ baseURL, storageState: { cookies: saved.cookies.filter((c: { name: string }) => c.name !== 'sf_session'), origins: [] } });
+    try {
+      const before = await oldSession.newPage();
+      await before.goto('/overview', { waitUntil: 'domcontentloaded' });
+      await expect(before.getByRole('heading', { level: 1, name: 'Overview' }), 'the saved session must be valid before the test').toBeVisible();
+
+      const page = await newSession.newPage();
+      await page.goto('/login', { waitUntil: 'domcontentloaded' });
+      const login = new LoginPage(page);
+      await login.waitForReady();
+      await login.login(env.user.email, env.user.password);
+      await page.waitForURL((u) => !/\/login$/.test(u.pathname), { timeout: 30_000 });
+      requireData(!/\/login\/verify/.test(page.url()), 'the login asked for an e-mailed OTP: the trusted-device cookie has expired (run npm run auth:save)');
+      await newSession.storageState({ path: env.authStatePath });
+
+      /* The old session is ended server-side: its next request lands on the sign-in page, saying why. */
+      await before.goto('/documents', { waitUntil: 'domcontentloaded' });
+      await expect(before, 'the previous session should be signed out by the new sign-in').toHaveURL(/\/login\?.*reason=superseded/, { timeout: 20_000 });
+      expect((await before.request.get('/api/proxy/me', { maxRedirects: 0 })).status(), 'the old session cookie must no longer authenticate API calls').not.toBe(200);
+      /* The new session works. */
+      await page.goto('/documents', { waitUntil: 'domcontentloaded' });
+      await expect(page.getByRole('heading', { level: 1, name: 'Documents' })).toBeVisible();
+    } finally {
+      await oldSession.close();
+      await newSession.close();
+    }
+  });
+});
+
 /** UF-01, UF-05 — journeys that start signed-out. */
 test.describe('Flow · Guest journeys', () => {
   test.use({ storageState: { cookies: [], origins: [] } });

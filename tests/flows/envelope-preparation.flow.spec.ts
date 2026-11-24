@@ -62,10 +62,12 @@ test.describe('Flow · Prepare an envelope', () => {
       await test.step('configure label and placeholder in the inspector', async () => {
         await preparePage.labelInput.fill(label);
         await preparePage.labelInput.press('Tab');
+        await expect(theField()).toBeVisible();
+        /* Without a placeholder the canvas shows the label; a placeholder then takes its place,
+           as it would in the signer's empty input. */
+        await expect.soft(theField(), 'canvas should show the new label').toContainText(label);
         await preparePage.placeholderInput.fill(placeholder);
         await preparePage.placeholderInput.press('Tab');
-        await expect(theField()).toBeVisible();
-        await expect.soft(theField(), 'canvas should show the new label').toContainText(label);
         await bugCheckpoint(KNOWN_BUGS.BUG05, () =>
           expect.soft(theField(), 'BUG-05: placeholder should show on the canvas').toContainText(placeholder),
         );

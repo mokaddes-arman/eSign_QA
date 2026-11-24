@@ -1,5 +1,7 @@
 import path from 'node:path';
 import { test, expect } from '../../src/fixtures/test';
+import { API } from '../../src/helpers/api';
+import { requireData } from '../../src/helpers/precondition';
 
 const SAMPLE_DOC = path.resolve(__dirname, '../fixtures/sample-agreement.png');
 
@@ -21,6 +23,31 @@ test.describe('New envelope landing', () => {
     await expect(preparePage.page.getByText('Choose the document', { exact: true })).toBeVisible();
     await expect(preparePage.page.getByText('Prepare', { exact: true }).first()).toBeVisible();
     await expect(preparePage.page.getByText('Workflow', { exact: true }).first()).toBeVisible();
+  });
+
+  test('PREP-001 landing actions lead where they say: file picker, templates and the most recent draft', async ({ preparePage, page }) => {
+    await preparePage.goto();
+
+    /* "Choose a file" opens the picker for PDFs, images and Word files — nothing is uploaded here. */
+    const accept = (await preparePage.fileInput.getAttribute('accept')) ?? '';
+    for (const type of [/pdf/i, /image|png|jpe?g/i, /docx|wordprocessingml/i]) expect(accept, `the picker should accept ${type}`).toMatch(type);
+    const [chooser] = await Promise.all([page.waitForEvent('filechooser', { timeout: 15_000 }), page.getByRole('button', { name: 'Choose a file', exact: true }).click()]);
+    expect(chooser.isMultiple(), 'one document per envelope').toBe(false);
+
+    /* "Continue your most recent draft" opens the draft edited last (API updated_at). */
+    type Doc = { id: string; status: string; is_template: boolean; deleted_at: string | null; archived_at: string | null; updated_at: string };
+    const drafts = ((await (await page.request.get(API.documents)).json()) as Doc[])
+      .filter((d) => !d.is_template && !d.deleted_at && !d.archived_at && ['draft', 'prepared'].includes(d.status))
+      .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+    requireData(drafts.length > 0, 'no draft envelope exists (API)');
+    await expect(preparePage.continueDraftLink).toHaveAttribute('href', `/documents/${drafts[0].id}/prepare`);
+
+    /* "Start from a template" opens the Templates folder. */
+    const templates = page.getByRole('link', { name: /Start from a template/ });
+    await expect(templates).toHaveAttribute('href', '/documents?folder=templates');
+    await templates.click();
+    await expect(page).toHaveURL(/\/documents\?folder=templates/);
+    await expect(page.getByRole('heading', { level: 2, name: 'Templates' })).toBeVisible();
   });
 });
 

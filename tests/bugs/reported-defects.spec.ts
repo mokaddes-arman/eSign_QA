@@ -1,5 +1,6 @@
 import { test, expect } from '../../src/fixtures/test';
 import { requireData } from '../../src/helpers/precondition';
+import { API } from '../../src/helpers/api';
 import { KNOWN_BUGS, UNIQUENESS_TEMPLATE, knownBug, expectBugsToFail } from '../../src/helpers/bugs';
 import { BLACK, WHITE, expectErrorStyled, expectTextReadableOn, isErrorColor } from '../../src/helpers/ui';
 
@@ -101,7 +102,10 @@ test.describe('Reported defects — builder, preview and workflow', () => {
 
   test('BUG-04 opening another document asks to close the current one', knownBug(KNOWN_BUGS.BUG04), async ({ preparePage, page }) => {
     const originalId = preparePage.documentIdFromUrl();
-    const name = await preparePage.currentDocumentName();
+    /* Search for ANOTHER document: the fixed builder draft's own name matches only itself. */
+    const others = ((await (await page.request.get(API.documents)).json()) as { id: string; title: string }[]).filter((d) => d.id !== originalId);
+    requireData(others.length > 0, 'the workspace needs a second document to open from the builder (API)');
+    const name = others[0].title;
 
     let nativeWarning = '';
     page.on('dialog', async (d) => {
@@ -122,7 +126,7 @@ test.describe('Reported defects — builder, preview and workflow', () => {
       const results = search.getByRole('listbox', { name: 'Search results' }).getByRole('option');
       await expect(results.first()).toBeVisible();
       const documents = (await results.count()) - 1; // last option is "See all documents matching …"
-      if (skip === 0) requireData(documents >= 2, `global search must return at least two documents to switch between; it returned ${documents}`);
+      if (skip === 0) requireData(documents >= 1, `global search for "${name.slice(0, 12)}" must return another document to switch to; it returned ${documents}`);
       if (skip >= documents) break;
       await results.nth(skip).click();
 
@@ -144,21 +148,29 @@ test.describe('Reported defects — builder, preview and workflow', () => {
   });
 
   test('BUG-05 placeholder text is shown on the editing canvas', knownBug(KNOWN_BUGS.BUG05), async ({ preparePage }) => {
-    await preparePage.requirePlacedFields();
-    const field = await preparePage.selectField('last');
+    /* A placeholder only applies to typed fields, so the test places its own Text Input
+       (the draft's seed fields are Signature, Full Name, Date Signed, Checkbox) and deletes it after. */
+    await preparePage.waitForCanvas();
+    const before = await preparePage.fieldCount();
+    const names = () => preparePage.placedFields.evaluateAll((els) => els.map((e) => e.getAttribute('aria-label') ?? ''));
+    const existing = new Set(await names());
     const placeholder = `QA placeholder ${Date.now() % 100000}`;
-    const original = await preparePage.placeholderInput.inputValue();
-
-    await preparePage.placeholderInput.fill(placeholder);
-    await preparePage.placeholderInput.press('Tab');
+    await preparePage.placeFieldInMiddle('Text Input');
+    await expect.poll(() => preparePage.fieldCount(), { timeout: 10_000 }).toBe(before + 1);
+    const fieldName = (await names()).find((n) => !existing.has(n));
+    expect(fieldName, 'the new Text Input should appear on the canvas').toMatch(/^Text Input for Recipient/);
+    const field = preparePage.page.getByRole('button', { name: fieldName!, exact: true });
     try {
+      await preparePage.placeholderInput.fill(placeholder);
+      await preparePage.placeholderInput.press('Tab');
       await expect(field, 'canvas field should display its placeholder while editing').toContainText(placeholder, {
         timeout: 5_000,
       });
     } finally {
-      await field.click();
-      await preparePage.placeholderInput.fill(original);
-      await preparePage.placeholderInput.press('Tab');
+      await preparePage.selectFieldDirect(field);
+      await expect(preparePage.page.getByRole('heading', { name: 'Text Input', exact: true }), 'cleanup: the selected field is not our Text Input').toBeVisible();
+      await preparePage.page.getByRole('button', { name: 'Delete', exact: true }).click();
+      await expect.poll(() => preparePage.fieldCount(), { timeout: 10_000, message: 'cleanup left the Text Input on the shared draft' }).toBe(before);
     }
   });
 

@@ -14,17 +14,65 @@ test.describe('Authentication · registration form', () => {
     await registerPage.goto();
   });
 
-  test('renders the create-account form with all required fields @smoke', async ({
+  test('AUTH-003 renders the create-account form with all required fields @smoke', async ({
     registerPage,
   }) => {
     await expect(registerPage.heading).toBeVisible();
-    await expect(registerPage.fullNameInput).toBeVisible();
-    await expect(registerPage.companyInput).toBeVisible();
-    await expect(registerPage.emailInput).toBeVisible();
-    await expect(registerPage.passwordInput).toBeVisible();
+    await expect(registerPage.createAccountButton).toBeVisible();
+
+    /* Each field accepts input and keeps it; the browser gets the right hints to autofill. */
+    const fields = [
+      { input: registerPage.fullNameInput, value: 'QA Form Check', type: 'text', autocomplete: 'name' },
+      { input: registerPage.companyInput, value: 'QA Form Ltd', type: 'text', autocomplete: 'organization' },
+      { input: registerPage.emailInput, value: 'qa.form-check@example.com', type: 'email', autocomplete: 'email' },
+      { input: registerPage.passwordInput, value: 'Form-Check#2026', type: 'password', autocomplete: 'new-password' },
+    ];
+    for (const { input, value, type, autocomplete } of fields) {
+      await expect(input).toBeVisible();
+      await expect(input).toHaveAttribute('type', type);
+      await expect(input).toHaveAttribute('autocomplete', autocomplete);
+      await input.fill(value);
+    }
+    for (const { input, value } of fields) await expect(input).toHaveValue(value);
+
+    /* The password is masked until the user reveals it, and the value survives the toggle. */
+    await registerPage.showPasswordButton.click();
+    await expect(registerPage.passwordInput).toHaveAttribute('type', 'text');
+    await expect(registerPage.passwordInput).toHaveValue('Form-Check#2026');
     await expect(registerPage.companyTypeSelect).toBeVisible();
     await expect(registerPage.companySizeSelect).toBeVisible();
-    await expect(registerPage.createAccountButton).toBeVisible();
+    await expect(registerPage.termsCheckbox).not.toBeChecked();
+  });
+
+  test('AUTH-007 company type and size list every option and keep the selection', async ({ registerPage }) => {
+    const options = (select: typeof registerPage.companyTypeSelect) =>
+      select.locator('option').evaluateAll((all) => all.map((o) => ({ value: (o as HTMLOptionElement).value, label: o.textContent?.trim(), disabled: (o as HTMLOptionElement).disabled })));
+
+    expect(await options(registerPage.companyTypeSelect)).toEqual([
+      { value: '', label: 'Choose an industry', disabled: true },
+      { value: 'real-estate', label: 'Real estate', disabled: false },
+      { value: 'mortgage', label: 'Mortgage and lending', disabled: false },
+      { value: 'property-management', label: 'Property management', disabled: false },
+      { value: 'insurance', label: 'Insurance', disabled: false },
+      { value: 'professional-services', label: 'Professional services', disabled: false },
+      { value: 'legal', label: 'Legal', disabled: false },
+      { value: 'hr', label: 'HR and recruiting', disabled: false },
+      { value: 'healthcare', label: 'Healthcare', disabled: false },
+      { value: 'government', label: 'Government and public sector', disabled: false },
+      { value: 'other', label: 'Other', disabled: false },
+    ]);
+    expect((await options(registerPage.companySizeSelect)).map((o) => o.label)).toEqual(['1–50', '51–500', '501–5,000', '5,000+']);
+
+    await registerPage.companyTypeSelect.selectOption({ label: 'Legal' });
+    await registerPage.companySizeSelect.selectOption({ label: '51–500' });
+    /* Editing the rest of the form must not reset either choice. */
+    await registerPage.fullNameInput.fill('QA Select Check');
+    await registerPage.emailInput.fill('qa.select-check@example.com');
+    await registerPage.termsCheckbox.check();
+    await expect(registerPage.companyTypeSelect).toHaveValue('legal');
+    await expect(registerPage.companySizeSelect).toHaveValue('51-500');
+    await expect(registerPage.companyTypeSelect.locator('option:checked')).toHaveText('Legal');
+    await expect(registerPage.companySizeSelect.locator('option:checked')).toHaveText('51–500');
   });
 
   test('blocks submission when the form is empty @regression', async ({ registerPage }) => {
@@ -41,7 +89,9 @@ test.describe('Authentication · registration form', () => {
       /Use 12\+ characters with a number, capital and symbol/i,
     );
 
-    await registerPage.passwordInput.fill(env.user.password);
+    /* A literal that meets the 12+ policy — the account password in .env is shorter
+       ("Almost — use 12+ characters"), and this case is about the meter, not the account. */
+    await registerPage.passwordInput.fill('Meter-Check#2026x');
     await expect(registerPage.passwordHint).toHaveText(/Strong|Excellent/i);
   });
 

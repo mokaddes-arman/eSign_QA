@@ -41,6 +41,16 @@ export class Navigation {
     await this.open();
     await this.sectionLink(section).click();
     await this.page.waitForLoadState('domcontentloaded');
+    await this.waitUntilClosed();
+  }
+
+  /**
+   * On narrow screens the drawer closes after a link in it navigates. Wait for that, or the
+   * next open() sees the closing drawer as "already open" and its links vanish under the click.
+   * No-op on desktop, where the sidebar is always shown.
+   */
+  async waitUntilClosed(): Promise<void> {
+    if (await this.openButton.isVisible().catch(() => false)) await expect(this.nav).toBeHidden();
   }
 
   async signOutFromMenu(): Promise<void> {

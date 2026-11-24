@@ -1,6 +1,7 @@
 import { test, expect } from '../../src/fixtures/test';
 import { requireData, requireEnv } from '../../src/helpers/precondition';
 import { API, EMAIL, FOREIGN_ID, ISO_DATE, SENSITIVE_KEY, UUID, allKeys, timedGet } from '../../src/helpers/api';
+import { KNOWN_BUGS, expectBugsToFail, knownBug } from '../../src/helpers/bugs';
 
 /*
  * API contract checks for the backend the web app calls (`/api/proxy/*`).
@@ -158,5 +159,28 @@ test.describe('API · contract @api', () => {
       expect(response.headers()['content-type'], url).toMatch(/^application\/json/);
       expect(response.headers()['x-content-type-options'], url).toBe('nosniff');
     }
+  });
+});
+
+/*
+ * BUG-34 — envelopes created before the 20 Nov 2026 deploy lost their stored PDF: the builder
+ * and the signer view show "Document unavailable". The builder specs now use a fresh fixed
+ * draft (src/helpers/builderDraft.ts), so this read-only check is what keeps the defect tracked.
+ */
+const DEPLOY_20_NOV = Date.parse('2026-11-20T15:00:00Z');
+
+test.describe('API · stored documents', () => {
+  test('BUG-34 every envelope PDF can be downloaded, including those created before the 20 Nov deploy', knownBug(KNOWN_BUGS.BUG34), async ({ request }) => {
+    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    const docs = (await (await request.get(API.documents)).json()) as { id: string; title: string; created_at: string }[];
+    const older = docs.filter((d) => Date.parse(d.created_at) < DEPLOY_20_NOV);
+    requireData(older.length > 0, 'no envelope created before the 20 Nov 2026 deploy is left to check (API)');
+    const broken: string[] = [];
+    for (const d of docs) {
+      const response = await request.get(`${API.document(d.id)}/pdf`);
+      const type = response.headers()['content-type'] ?? '';
+      if (!response.ok() || !/application\/pdf/.test(type)) broken.push(`${d.title} ${d.id.slice(0, 8)} (created ${d.created_at.slice(0, 10)}): ${response.status()} ${type}`);
+    }
+    expect(broken, `${broken.length} of ${docs.length} envelope PDFs do not load`).toEqual([]);
   });
 });

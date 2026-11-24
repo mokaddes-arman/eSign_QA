@@ -15,6 +15,18 @@ export async function optionLabels(select: Locator): Promise<string[]> {
   return select.evaluate((el) => [...(el as HTMLSelectElement).options].map((o) => o.text.trim()));
 }
 
+/**
+ * Trimmed innerText of every element matching `selector` inside `root`, read in one evaluate().
+ * Reading many elements through role locators (allInnerTexts on cells, paragraphs, buttons)
+ * can crash the Firefox tab on this app (TEST_PLAN R19).
+ */
+export async function textsIn(root: Locator, selector: string): Promise<string[]> {
+  return root.evaluate(
+    (el, sel) => [...el.querySelectorAll(sel)].map((e) => ((e as HTMLElement).innerText ?? e.textContent ?? '').replace(/\s+/g, ' ').trim()),
+    selector,
+  );
+}
+
 export type RGBA = { r: number; g: number; b: number; a: number };
 
 export function parseColor(value: string): RGBA {
@@ -282,7 +294,7 @@ export async function expectStandardUi(
   expect(uncaught, `uncaught page errors:\n${uncaught.join('\n')}`).toEqual([]);
 }
 
-const HYDRATION_ERROR = /Minified React error #(418|423|425)\b|Hydration failed/;
+export const HYDRATION_ERROR = /Minified React error #(418|423|425)\b|Hydration failed/;
 
 /** Re-checks the layout at a phone width; restores the viewport afterwards. */
 export async function expectResponsive(page: Page, width = 390, height = 844): Promise<void> {

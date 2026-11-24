@@ -22,6 +22,7 @@ const DRAFT_SPECS = [
   '**/ui/signer.ui.spec.ts',
   '**/documents/prepare.spec.ts',
   '**/documents/builder-details.spec.ts',
+  '**/documents/builder-behaviour.spec.ts',
   '**/signer/signer.spec.ts',
   /* "Add as recipient" writes to the newest draft. */
   '**/contacts/add-as-recipient.spec.ts',
@@ -42,6 +43,10 @@ const ACCOUNT_SPECS = [
   '**/flows/guest.flow.spec.ts',
   /* Theme is saved to the account ("applies on every device"). */
   '**/flows/personalise.flow.spec.ts',
+  /* A new branding theme becomes the organization default for every envelope. */
+  '**/flows/branding.flow.spec.ts',
+  /* Adopts a signature (races ACC-006) and edits the organization field palette (builder-wide). */
+  '**/flows/signing-defaults.flow.spec.ts',
   /* Duplicates the newest draft (the copy briefly becomes the most recent draft). */
   '**/flows/library-lifecycle.flow.spec.ts',
   '**/security/session.spec.ts',

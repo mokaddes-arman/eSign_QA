@@ -92,6 +92,38 @@ test.describe('Documents · search, filter & sort', () => {
     await expect(documentsPage.rows).toHaveCount(docs.length);
   });
 
+  test('DOC-005 type, time and owner filters narrow the list to the matching envelopes', async ({ documentsPage, page, request }) => {
+    const me = await (await request.get(API.me)).json();
+    const full = (await (await request.get(API.documents)).json()) as (Doc & { doc_type: string | null; owner_user_id: string; created_at: string })[];
+    const live = full.filter((d) => !d.is_template && !d.archived_at && !d.deleted_at);
+    const apply = async (select: import('@playwright/test').Locator, label: string) => {
+      const before = page.url();
+      await expect(async () => {
+        await select.selectOption({ label });
+        await expect(page).not.toHaveURL(before, { timeout: 3_000 });
+      }).toPass({ timeout: 20_000 });
+      return shownCount(page);
+    };
+    await documentsPage.openFilters();
+
+    /* Time: "Last 7 days" keeps envelopes updated in the last 7 days (the builder draft is edited every run). */
+    const week = live.filter((d) => Date.now() - Date.parse(d.updated_at) <= 7 * 24 * 3600 * 1000).length;
+    requireData(week > 0 && week < live.length, `the time filter needs both recent and older envelopes (${week} of ${live.length} updated this week)`);
+    expect(await apply(documentsPage.timeFilter, 'Last 7 days'), 'Last 7 days vs updated_at (API)').toBe(week);
+    await expect(page).toHaveURL(/[?&]time=7\b/);
+    expect(await apply(documentsPage.timeFilter, 'All time')).toBe(live.length);
+
+    /* Owner: "Owned by me" keeps the signed-in user's envelopes. */
+    expect(await apply(documentsPage.ownerFilter, 'Owned by me'), 'Owned by me vs owner (API)').toBe(live.filter((d) => d.owner_user_id === me.id).length);
+    expect(await apply(documentsPage.ownerFilter, 'All owners')).toBe(live.length);
+
+    /* Type: each document type keeps only envelopes of that type (none are typed yet → empty state). */
+    const agreements = live.filter((d) => d.doc_type === 'agreement').length;
+    expect(await apply(documentsPage.typeFilter, 'Agreements'), 'Agreements vs doc_type (API)').toBe(agreements);
+    if (agreements === 0) await expect(page.getByRole('main').getByText(/^Nothing in /)).toBeVisible();
+    expect(await apply(documentsPage.typeFilter, 'All types')).toBe(live.length);
+  });
+
   test('DOC-004 BUG-23 status filter "Drafts" lists the same envelopes as the Drafts view', knownBug(KNOWN_BUGS.BUG23), async ({ documentsPage, page }) => {
     test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
     await documentsPage.openFolder('Drafts');

@@ -43,6 +43,32 @@ test.describe('Signer experience preview', () => {
     ).toBeVisible();
   });
 
+  test('SIGN-002 completing the required fields moves the progress bar to 100 % (nothing is saved)', async ({ signerPreviewPage, page }) => {
+    const progress = signerPreviewPage.progress;
+    const counter = page.getByText(/^\d+ of \d+ required fields completed$/);
+    await signerPreviewPage.waitForDocument();
+    const total = Number((await counter.innerText()).match(/of (\d+)/)![1]);
+    expect(total, 'the builder draft has a required Signature').toBeGreaterThan(0);
+    await expect(counter).toHaveText(`0 of ${total} required fields completed`);
+    await expect(progress).toHaveAttribute('aria-valuenow', '0');
+    const writes: string[] = [];
+    page.on('request', (r) => { if (r.method() !== 'GET' && /\/api\/proxy\//.test(r.url())) writes.push(`${r.method()} ${r.url()}`); });
+
+    /* "Start signing" goes to the first required field: the Signature, signed with a typed name. */
+    const dialog = page.getByRole('dialog', { name: 'Adopt your signature' });
+    await clickUntilVisible(signerPreviewPage.startSigningButton, dialog);
+    await expect(dialog.getByRole('tablist', { name: 'Signature method' }).getByRole('tab')).toHaveText(['Draw', 'Type', 'Upload', 'Saved / Passkey']);
+    await dialog.getByRole('tab', { name: 'Type' }).click();
+    const typed = await dialog.getByRole('textbox', { name: 'Typed signature text' }).inputValue();
+    await dialog.getByRole('button', { name: 'Adopt and sign' }).click();
+    await expect(dialog).toBeHidden();
+
+    await expect(counter).toHaveText(`1 of ${total} required fields completed`);
+    await expect(progress).toHaveAttribute('aria-valuenow', String(Math.round(100 / total)));
+    await expect(signerPreviewPage.signerFields.filter({ hasText: typed }).first(), 'the signature field shows the adopted signature').toBeVisible();
+    expect(writes.filter((w) => !/\/telemetry|\/events|\/analytics/.test(w)), 'preview mode must not save anything').toEqual([]);
+  });
+
   test('toggles desktop and mobile viewports', async ({ signerPreviewPage }) => {
     await expect(signerPreviewPage.desktopToggle).toHaveAttribute('aria-pressed', 'true');
     await signerPreviewPage.mobileToggle.click();

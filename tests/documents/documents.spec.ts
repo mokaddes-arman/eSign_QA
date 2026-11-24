@@ -2,6 +2,8 @@ import path from 'node:path';
 import { test, expect } from '../../src/fixtures/test';
 import { optionLabels } from '../../src/helpers/ui';
 import { clickUntilVisible } from '../../src/helpers/wait';
+import { API } from '../../src/helpers/api';
+import type { Locator } from '@playwright/test';
 
 const SAMPLE_DOC = path.resolve(__dirname, '../fixtures/sample-agreement.png');
 
@@ -31,6 +33,38 @@ test.describe('Documents library @smoke', () => {
     ] as const) {
       await expect(documentsPage.folderLink(view)).toBeVisible();
     }
+  });
+
+  test('DOC-001 folder and view counts match the workspace data', async ({ documentsPage, page }) => {
+    const [me, docs, templates, folders] = await Promise.all([
+      page.request.get(API.me).then((r) => r.json()),
+      page.request.get(API.documents).then((r) => r.json()),
+      page.request.get(API.templates).then((r) => r.json()),
+      page.request.get(API.folders).then((r) => r.json()),
+    ]);
+    /* Counts render after the label ("All documents 6"); a zero count is omitted ("Archive"). */
+    const count = async (link: Locator) => Number(((await link.textContent()) ?? '').match(/(\d+)\s*$/)?.[1] ?? 0);
+    const folderNav = page.getByRole('navigation', { name: 'Folders' });
+    const viewNav = page.getByRole('navigation', { name: 'Views' });
+
+    await expect(documentsPage.heading).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Documents' }).getByText(/^\d+ documents?$/)).toHaveText(`${docs.length} document${docs.length === 1 ? '' : 's'}`);
+    expect(await count(folderNav.getByRole('link', { name: /^All documents/ })), 'All documents vs documents API').toBe(docs.length);
+    expect(await count(folderNav.getByRole('link', { name: /^Templates/ })), 'Templates vs templates API').toBe(templates.items.length);
+    const mine = (docs as { owner_user_id: string }[]).filter((d) => d.owner_user_id === me.id).length;
+    expect(await count(viewNav.getByRole('link', { name: /^Owned by me/ })), 'Owned by me vs documents owned by the signed-in user').toBe(mine);
+
+    /* Every folder the API knows is listed (same number of entries per name — names are not unique, BUG-32). */
+    const expected = new Map<string, number>();
+    for (const f of (Array.isArray(folders) ? folders : folders.items) as { name: string }[]) expected.set(f.name, (expected.get(f.name) ?? 0) + 1);
+    const listed = new Map<string, number>();
+    for (const t of await folderNav.getByRole('link').allTextContents()) {
+      const name = t.trim();
+      if (/^(All documents|Templates|Archive|Trash)\s*\d*$/.test(name)) continue;
+      listed.set(name, (listed.get(name) ?? 0) + 1);
+    }
+    expect(Object.fromEntries(listed), 'Folders list vs folders API').toEqual(Object.fromEntries(expected));
+    await expect(page.getByText(/^Showing \d+ of \d+ documents?$/)).toHaveText(`Showing ${docs.length} of ${docs.length} document${docs.length === 1 ? '' : 's'}`);
   });
 
   test('exposes every filter dimension', async ({ documentsPage }) => {

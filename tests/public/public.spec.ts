@@ -1,4 +1,6 @@
 import { test, expect } from '../../src/fixtures/test';
+import { KNOWN_BUGS, expectBugsToFail, knownBug } from '../../src/helpers/bugs';
+import { clickUntilVisible, waitForHydration } from '../../src/helpers/wait';
 
 /* Public surfaces are guest-only: never reuse the saved session. */
 test.use({ storageState: { cookies: [], origins: [] } });
@@ -41,12 +43,40 @@ test.describe('Public site', () => {
     });
   }
 
-  test('forgot-password page offers a reset link form', async ({ page }) => {
+  test('AUTH-017 forgot-password validates the address and answers without revealing accounts', async ({ page }) => {
     await page.goto('/login/forgot');
+    await waitForHydration(page);
     await expect(page.getByRole('heading', { name: 'Reset your password' })).toBeVisible();
-    await expect(page.getByRole('textbox', { name: 'Work email' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Send reset link' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Back to sign in' })).toHaveAttribute('href', '/login');
+    const email = page.getByRole('textbox', { name: 'Work email' });
+    const send = page.getByRole('button', { name: 'Send reset link' });
+    const confirmation = page.getByRole('status').filter({ hasText: 'Check your inbox' });
+
+    /* A malformed address is stopped by the e-mail field itself: nothing is sent. */
+    await email.fill('not-an-email');
+    await send.click();
+    expect(await email.evaluate((el) => (el as HTMLInputElement).validity.valid), 'a malformed address must fail validation').toBe(false);
+    await expect(confirmation).toHaveCount(0);
+
+    /* An address with no account gets the same neutral answer a real one would (no account enumeration). */
+    const nobody = `qa.nobody+${Date.now()}@example.com`;
+    await email.fill(nobody);
+    await clickUntilVisible(send, confirmation, { what: 'No confirmation after "Send reset link"' });
+    await expect(confirmation).toContainText(`If an account exists for ${nobody}`);
     await expect(page.getByRole('link', { name: 'Back to sign in' })).toBeVisible();
+  });
+
+  test('BUG-35 reset-link lifetime is the same before and after sending', knownBug(KNOWN_BUGS.BUG35), async ({ page }) => {
+    test.fail(expectBugsToFail, 'KNOWN_BUGS=expect-fail');
+    await page.goto('/login/forgot');
+    await waitForHydration(page);
+    const minutes = (text: string) => Number(text.match(/(\d+) minutes/)?.[1]);
+    const promised = minutes(await page.getByRole('region', { name: 'Reset your password' }).getByRole('paragraph').first().innerText());
+    expect(promised, 'the page should state how long the link is valid').toBeGreaterThan(0);
+    await page.getByRole('textbox', { name: 'Work email' }).fill(`qa.nobody+${Date.now()}@example.com`);
+    const confirmation = page.getByRole('status').filter({ hasText: 'Check your inbox' });
+    await clickUntilVisible(page.getByRole('button', { name: 'Send reset link' }), confirmation, { what: 'No confirmation after "Send reset link"' });
+    expect(minutes(await confirmation.innerText()), `the form promised ${promised} minutes`).toBe(promised);
   });
 
   test('unknown routes send guests to sign in (404 is shown only when signed in)', async ({ page }) => {

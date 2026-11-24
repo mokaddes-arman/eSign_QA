@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import type { Page } from '@playwright/test';
 import { test, expect } from '../../src/fixtures/test';
 import { API } from '../../src/helpers/api';
@@ -46,7 +47,8 @@ async function erase(page: Page, id: string) {
   if (!doc) return;
   if (!doc.deleted_at) await rowAction(page, doc.archived_at ? 'archive' : '', id, 'Delete', 'Move to Trash');
   await expect.poll(async () => (await getDoc(page, id))?.deleted_at).toBeTruthy();
-  await rowAction(page, 'trash', id, 'Delete', 'Delete permanently');
+  /* The Trash menu item was "Delete" until 23 Nov 2026, now "Delete permanently" (next to the new "Restore"). */
+  await rowAction(page, 'trash', id, /^Delete( permanently)?$/, 'Delete permanently');
   await expect.poll(() => getDoc(page, id), { message: 'test copy was not erased' }).toBeNull();
 }
 
@@ -80,6 +82,20 @@ test.describe('Flow · Library lifecycle @data', () => {
         await expect(dialog).toBeHidden();
         await expect.poll(async () => (await getDoc(page, id))?.title).toBe(name);
         await expect(documentsPage.rowByName(name)).toHaveCount(1);
+      });
+
+      await test.step('Download saves the PDF; Print opens a print window (DOC-018)', async () => {
+        await documentsPage.goto();
+        let menu = await openRowMenu(page, '', id);
+        const [download] = await Promise.all([page.waitForEvent('download', { timeout: 30_000 }), menu.getByRole('menuitem', { name: 'Download', exact: true }).click()]);
+        expect(download.suggestedFilename()).toBe(`${name}.pdf`);
+        const pdf = await readFile(await download.path());
+        expect(pdf.subarray(0, 5).toString(), 'the download is a PDF').toBe('%PDF-');
+        /* The print window's content cannot be inspected headless (it stays about:blank there). */
+        menu = await openRowMenu(page, '', id);
+        const [printWindow] = await Promise.all([page.waitForEvent('popup', { timeout: 15_000 }), menu.getByRole('menuitem', { name: 'Print', exact: true }).click()]);
+        expect(printWindow, 'Print opens a window').toBeTruthy();
+        await printWindow.close();
       });
 
       await test.step('Move to folder files it in that folder', async () => {
@@ -121,6 +137,13 @@ test.describe('Flow · Library lifecycle @data', () => {
         await expect(documentsPage.rowByName(name)).toHaveCount(0);
         await page.goto('/documents?folder=trash');
         await expect(documentsPage.rowByName(name)).toHaveCount(1, { timeout: 20_000 });
+      });
+
+      await test.step('Restore brings it back from Trash (BUG-30 fix)', async () => {
+        await rowAction(page, 'trash', id, 'Restore');
+        await expect.poll(async () => (await getDoc(page, id))?.deleted_at, { message: 'Restore did not clear deleted_at' }).toBeNull();
+        await documentsPage.goto();
+        await expect(documentsPage.rowByName(name), 'the restored document is back in All documents').toHaveCount(1, { timeout: 20_000 });
       });
     } finally {
       if (id) await test.step('erase the copy', () => erase(page, id));

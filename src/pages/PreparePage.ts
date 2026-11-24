@@ -1,6 +1,7 @@
 import { expect, type Locator } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { requireData } from '../helpers/precondition';
+import { ensureBuilderDraft, seedBuilderFields } from '../helpers/builderDraft';
 
 /** /documents/{id}/prepare — field placement builder. */
 export class PreparePage extends BasePage {
@@ -141,21 +142,29 @@ export class PreparePage extends BasePage {
   }
 
   /**
-   * Opens the newest existing draft from the "New envelope" landing page.
-   * Builder tests use this instead of uploading, so a run never spends the
-   * workspace's monthly signature-request quota.
+   * Opens the fixed builder draft ("QA Builder draft", see helpers/builderDraft.ts) with its
+   * seed fields. Every builder, workflow and signer-preview spec works on this one draft, so
+   * a run spends no signature request unless the draft has to be re-created.
+   *
+   * (Named for its history: it used to follow "Continue your most recent draft", but every
+   * draft from before 20 Nov 2026 lost its PDF — BUG-34 — so the newest draft is unusable.)
    */
   async continueLatestDraft(): Promise<void> {
-    const link = this.page.getByRole('link', { name: /Continue your most recent draft/ });
-    await expect(link).toBeVisible({ timeout: 15_000 });
-    /* Navigate by href: a click before hydration is silently dropped. */
-    const href = await link.getAttribute('href');
-    if (href) await this.page.goto(href, { waitUntil: 'domcontentloaded' });
-    else await link.click();
-    await expect(this.page).toHaveURL(/\/documents\/[0-9a-f-]+\/prepare/);
+    const id = await ensureBuilderDraft(this.page);
+    await this.page.goto(`/documents/${id}/prepare`, { waitUntil: 'domcontentloaded' });
     await expect(this.heading).toBeVisible();
     await this.settle();
+    await this.waitForCanvas();
+    await seedBuilderFields(this.page);
   }
+
+  /** Id of the fixed builder draft, without opening it. */
+  async builderDraftId(): Promise<string> {
+    return ensureBuilderDraft(this.page);
+  }
+
+  /** The "Continue your most recent draft" link on the landing page. */
+  readonly continueDraftLink = this.page.getByRole('link', { name: /Continue your most recent draft/ });
 
   async upload(filePath: string): Promise<void> {
     await this.fileInput.setInputFiles(filePath);

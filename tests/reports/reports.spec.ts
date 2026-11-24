@@ -32,15 +32,21 @@ test.describe('Reports & analytics @smoke', () => {
     );
   });
 
-  test('exposes every report section', async ({ reportsPage }) => {
-    for (const section of [
-      'All reports',
-      'By document',
-      'By template',
-      'By recipient',
-      'Custom report',
-    ] as const) {
-      await expect(reportsPage.sectionLink(section)).toBeVisible();
+  test('REP-003 exposes every report section and each opens its report', async ({ reportsPage, page }) => {
+    const sections = [
+      { name: 'All reports', query: /[?&]section=all\b/, heading: 'All reports' },
+      { name: 'By document', query: /[?&]section=documents\b/, heading: 'Documents report' },
+      { name: 'By template', query: /[?&]section=templates\b/, heading: 'Templates report' },
+      { name: 'By recipient', query: /[?&]section=recipients\b/, heading: 'Recipients report' },
+      { name: 'Custom report', query: /[?&]section=custom\b/, heading: 'Custom report' },
+    ] as const;
+    for (const { name } of sections) await expect(reportsPage.sectionLink(name)).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'My Analytics' })).toBeVisible();
+    for (const { name, query, heading } of sections) {
+      await reportsPage.openSection(name);
+      await expect(page, `"${name}" did not open its section`).toHaveURL(query);
+      await expect(page.getByRole('heading', { level: 2, name: heading, exact: true })).toBeVisible();
+      await expect(page.getByRole('heading', { level: 2, name: 'My Analytics' })).toHaveCount(0);
     }
   });
 
