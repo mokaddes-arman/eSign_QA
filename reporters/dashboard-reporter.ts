@@ -203,8 +203,14 @@ export default class DashboardReporter implements Reporter {
     const tests = [...this.byId.values()].map((e) => this.finalize(e));
     if (!tests.length) return; // e.g. `--list`: keep the previous dashboard
 
-    const totals: Record<Status | 'total', number> = { total: tests.length, passed: 0, failed: 0, flaky: 0, skipped: 0 };
-    for (const t of tests) totals[t.status as Status]++;
+    /* `passed` counts every test that met its expectation, including open known-bug checks that
+       failed under KNOWN_BUGS=expect-fail; `expectedFailures` is that subset. Displays show
+       "Passed = passed − expectedFailures" next to the expected failures. */
+    const totals: Record<Status | 'total' | 'expectedFailures', number> = { total: tests.length, passed: 0, failed: 0, flaky: 0, skipped: 0, expectedFailures: 0 };
+    for (const t of tests) {
+      totals[t.status as Status]++;
+      if (t.expectedFailure) totals.expectedFailures++;
+    }
     const denom = totals.passed + totals.failed + totals.flaky;
     const passRate = denom ? (totals.passed + totals.flaky) / denom : 0;
 
@@ -233,6 +239,7 @@ export default class DashboardReporter implements Reporter {
       failed: totals.failed,
       flaky: totals.flaky,
       skipped: totals.skipped,
+      expectedFailures: totals.expectedFailures,
       passRate,
       bugsOpen,
     };
@@ -271,7 +278,8 @@ export default class DashboardReporter implements Reporter {
     );
 
     console.log(
-      `\nDashboard: ${this.outputFile}  (${totals.passed} passed, ${totals.failed} failed, ` +
+      `\nDashboard: ${this.outputFile}  (${totals.passed - totals.expectedFailures} passed, ` +
+        `${totals.expectedFailures} expected failures (open bugs), ${totals.failed} failed, ` +
         `${totals.flaky} flaky, ${totals.skipped} skipped, ${(passRate * 100).toFixed(1)}% pass, ` +
         `${bugsOpen}/${bugs.length} known bugs reproduced)`,
     );
@@ -297,6 +305,9 @@ export default class DashboardReporter implements Reporter {
     if (status === 'passed' && entry.attempts.slice(0, -1).some((a) => a.status === 'failed') && !expectedToFail) {
       status = 'flaky';
     }
+
+    /* Met its expectation by failing: an open known bug under KNOWN_BUGS=expect-fail. */
+    const expectedFailure = expectedToFail && last.status === 'failed';
 
     const ann = (type: string) => entry.annotations.find((a) => a.type === type)?.description;
     const { module, layer } = classify(entry.file);
@@ -328,6 +339,7 @@ export default class DashboardReporter implements Reporter {
       layer,
       caseIds: entry.annotations.filter((a) => a.type === 'case').map((a) => a.description),
       status,
+      expectedFailure,
       duration: last.duration,
       startTime: entry.startTime,
       workerIndex: entry.workerIndex,

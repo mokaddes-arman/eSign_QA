@@ -342,7 +342,8 @@
         ${ringCard()}
         ${trendCard()}
         ${durationCard()}
-        ${statCard('Passed', f(t.passed), 'first time', 'v-pass')}
+        ${statCard('Passed', f(t.passed) - f(t.expectedFailures), 'first time', 'v-pass')}
+        ${f(t.expectedFailures) ? statCard('Expected failures', f(t.expectedFailures), 'open known bugs (KNOWN_BUGS=expect-fail)', 'v-skip') : ''}
         ${statCard('Failed', f(t.failed), t.failed ? 'needs attention' : 'none', 'v-fail')}
         ${statCard('Flaky', f(t.flaky), 'passed on retry', 'v-flaky')}
         ${statCard('Skipped', f(t.skipped), 'not executed', 'v-skip')}
@@ -645,7 +646,7 @@
     const t = data.totals;
     const text = [
       `${data.projectName} — ${pct(data.passRate)} pass`,
-      `Total ${f(t.total)} · Passed ${f(t.passed)} · Failed ${f(t.failed)} · Flaky ${f(t.flaky)} · Skipped ${f(t.skipped)}`,
+      `Total ${f(t.total)} · Passed ${f(t.passed) - f(t.expectedFailures)} · Expected failures (open bugs) ${f(t.expectedFailures)} · Failed ${f(t.failed)} · Flaky ${f(t.flaky)} · Skipped ${f(t.skipped)}`,
       `Duration ${fmtMs(data.durationMs)} · ${f(data.workers)} worker(s)`,
       `Known bugs reproduced: ${bugsOpen.length}/${bugTests.length}`,
     ].join('\n');

@@ -137,7 +137,9 @@ jobs:
             echo "- Report: \`playwright-report-chromium\` artifact"
             echo "- Results: \`test-results-chromium\` artifact (JUnit + traces)"
             if [ -f dashboard-report/last-run.json ]; then
-              node -e "const r=require('./dashboard-report/last-run.json');const t=r.totals;console.log('');console.log('| Total | Passed | Failed | Flaky | Skipped | Pass rate | Known bugs reproduced |');console.log('|---:|---:|---:|---:|---:|---:|---:|');console.log('| '+[t.total,t.passed,t.failed,t.flaky,t.skipped,(r.passRate*100).toFixed(1)+'%',r.bugsOpen].join(' | ')+' |')"
+              # "Passed" excludes open known-bug checks that failed as expected (KNOWN_BUGS=expect-fail);
+              # they are counted under "Expected failures". Pass rate = tests that met their expectation.
+              node -e "const r=require('./dashboard-report/last-run.json');const t=r.totals;const xf=t.expectedFailures||0;console.log('');console.log('| Total | Passed | Expected failures (open bugs) | Failed | Flaky | Skipped | Pass rate |');console.log('|---:|---:|---:|---:|---:|---:|---:|');console.log('| '+[t.total,t.passed-xf,xf,t.failed,t.flaky,t.skipped,(r.passRate*100).toFixed(1)+'%'].join(' | ')+' |')"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
