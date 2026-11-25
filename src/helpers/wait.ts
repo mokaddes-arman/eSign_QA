@@ -58,12 +58,32 @@ export async function clickUntilVisible(
  * Waits until client components have hydrated.
  *
  * The app server-renders its markup, so `domcontentloaded` fires while the
- * page is visible but React has not attached its handlers yet. Clicks and
- * file selections made in that window are silently dropped. Hydration runs
- * as soon as the JS bundles execute, so a quiet network is a reliable proxy
- * for "interactive". The timeout is best-effort: pages that keep a socket
- * open should still be usable once hydration has finished.
+ * page is visible but React has not attached its handlers yet. Clicks made in
+ * that window are silently dropped, and text typed into a controlled input is
+ * shown but never reaches React state — the next re-render wipes it (AUTH-003
+ * on CI WebKit: "Full name" emptied when "Company" was filled 80 ms later).
+ *
+ * A quiet network is not enough: the bundles finish downloading well before
+ * they finish executing (≈0.5–0.75 s on the register page in WebKit). So after
+ * `networkidle`, wait until React has claimed every form control on the page —
+ * hydration stamps each host element with a `__reactProps$<id>` property.
+ * `getOwnPropertyNames` is required: WebKit leaves these out of `Object.keys`.
+ *
+ * Both waits are best-effort: a page that keeps a socket open, or renders a
+ * control outside React, falls through after the timeout instead of failing.
  */
 export async function waitForHydration(page: Page, timeout = 10_000): Promise<void> {
   await page.waitForLoadState('networkidle', { timeout }).catch(() => undefined);
+  await page
+    .waitForFunction(
+      () =>
+        Array.from(document.querySelectorAll('input, select, textarea, button')).every((el) =>
+          Object.getOwnPropertyNames(el).some((key) => key.startsWith('__reactProps$')),
+        ),
+      undefined,
+      { timeout },
+    )
+    .catch(() =>
+      console.warn(`[hydration] ${page.url()}: React had not claimed every form control after ${timeout}ms — continuing`),
+    );
 }
