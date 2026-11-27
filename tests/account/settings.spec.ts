@@ -62,7 +62,7 @@ test.describe('Account settings pages', () => {
     const pages = Math.ceil(matching / 25);
     await expect(pager.getByRole('button', { name: 'Previous page' })).toBeDisabled();
     if (pages > 1) {
-      await expect(pager.getByRole('button', { name: 'Page 2' })).toBeVisible();
+      await expect(pager.getByRole('button', { name: 'Page 2', exact: true })).toBeVisible();
       const firstPage = await rows.allInnerTexts();
       await pager.getByRole('button', { name: 'Next page' }).click();
       await expect(summary).toHaveText(`Showing 26–${Math.min(50, matching)} of ${matching} matching events`);
